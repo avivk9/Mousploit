@@ -1,9 +1,7 @@
 import colorama
 from colorama import Fore, Style
-from mousejack.mousejack import *
 
 colorama.init(autoreset=True)
-
 
 def print_help():
     print("helping")
@@ -62,10 +60,8 @@ def main():
         
         # example - TODO: CHANGE
         if request.__contains__('scan'):
-            MouseJack.scan()
+            print('scanning...')
             continue
-        
-
 
         # anything else:
         print('what do u mean?')
