@@ -19,7 +19,12 @@
 This is a modified version of the original nrf24.py from MouseJack:
 1. Removed PyUSB dependency check.
 2. Removed import of logging module, replaced logging.debug() calls with print().
-3. Original code is in Python 2, made small changes to support Python 3.
+3. Original code is in Python 2, made small changes to support Python 3. For example, in Python 2 the map(func, iterable) function
+   applies func to every item of iterable and returns a *list* of the results. It was used for applying the ord() function
+   to every character of prefix/address/payload parameters (which were originally strings), to convert them to integers.
+   But in Python 3, the map() function returns an *iterator* that applies func to every item of iterable, yielding the results.
+   This iterator cannot be concatenated to a list, so we got rid of the map() call. As a result, the prefix/address/payload
+   are expected to be lists of integers.
 4. Moved unused constants and functions to unused.py.
 '''
 
@@ -52,18 +57,18 @@ class nrf24:
     
     # Put the radio in pseudo-promiscuous mode
     def enter_promiscuous_mode(self, prefix=[]):
-        self.send_usb_command(ENTER_PROMISCUOUS_MODE, [len(prefix)] + map(ord, prefix))
+        self.send_usb_command(ENTER_PROMISCUOUS_MODE, [len(prefix)] + prefix)
         self.dongle.read(0x81, 64, timeout=nrf24.usb_timeout)
         if len(prefix) > 0:
-            print('Entered promiscuous mode with address prefix {0}'.format(':'.join('{:02X}'.format(ord(b)) for b in prefix)))
+            print('Entered promiscuous mode with address prefix {0}'.format(':'.join('{:02X}'.format(b) for b in prefix)))
         else:
             print('Entered promiscuous mode')
     
     # Put the radio in ESB "sniffer" mode (ESB mode w/o auto-acking)
     def enter_sniffer_mode(self, address):
-        self.send_usb_command(ENTER_SNIFFER_MODE, [len(address)] + map(ord, address))
+        self.send_usb_command(ENTER_SNIFFER_MODE, [len(address)] + address)
         self.dongle.read(0x81, 64, timeout=nrf24.usb_timeout)
-        print('Entered sniffer mode with address {0}'.format(':'.join('{:02X}'.format(ord(b)) for b in address[::-1])))
+        print('Entered sniffer mode with address {0}'.format(':'.join('{:02X}'.format(b) for b in address[::-1])))
     
     # Receive a payload if one is available
     def receive_payload(self):
@@ -72,7 +77,7 @@ class nrf24:
     
     # Transmit an ESB payload
     def transmit_payload(self, payload, timeout=4, retransmits=15):
-        data = [len(payload), timeout, retransmits] + map(ord, payload)
+        data = [len(payload), timeout, retransmits] + payload
         self.send_usb_command(TRANSMIT_PAYLOAD, data)
         return self.dongle.read(0x81, 64, timeout=nrf24.usb_timeout)[0] > 0
      
