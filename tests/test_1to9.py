@@ -1,14 +1,17 @@
 import time
 import sys
+from os.path import dirname
 
 '''
-Appending the parent folder to sys.path so that we can import a module from a sibling directory (radio_agent).
+Appending the project root folder to sys.path so that we can import modules from other directories (radio_agent for example).
 Simply using a relative import such as: from ..radio_agent import nrf24, would NOT work since any script that uses
 explicit relative imports cannot be run directly, but this is a script we want to run.
-In addition, this was not enough to make it run inside VS Code so a launch.json file was added, assigning the workspace folder
-as the value of the PYTHONPATH environment variable.
+To reach the path of the project root in a general way (regardless of the current working directory), we use the __file__ variable
+which stores the full path of this file, then call os.path.dirname twice to get only the path of the parent of the tests directory.
+To be fully confident, we also have a launch.json file that assigns the workspace folder as the value of the PYTHONPATH environment variable,
+making sure everything can run smoothly within VS Code as well.
 '''
-sys.path.append('.')
+sys.path.append(dirname(dirname(__file__)))
 from radio_agent import nrf24
 from utils.hid_scan_codes import *
 from utils.general_utils import *
@@ -25,7 +28,6 @@ def main():
 
     # initialize the radio
     radio = nrf24.nrf24()
-    radio.enable_lna() # low noise amplifier
 
     '''
     STEP 1: in order to communicate with the victim dongle, we must identify the frequency channel it uses to communicate with its paired device.
@@ -33,6 +35,7 @@ def main():
     We do this until an ACK is received from the dongle, meaning we found the right channel.
     '''
     _ = find_address_channel(radio, address)
+
     '''
     STEP 2: injecting keystrokes of '1' to '9'. But there is a problem - the dongle and paired device could move to a different channel while we do this,
     thus breaking the attack. According to the whitepaper, they remain on the same channel as long as there is no packet loss. To indicate this, the device
@@ -43,7 +46,6 @@ def main():
     So we first send the dongle a packet that sets a relatively long keepalive timeout, and then transmit keepalives very frequently. This way we can be confident
     that there won't be a timeout that would cause the dongle to switch channels unexpectedly.
     '''
-
     hid_scan_codes_1_to_9 = [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9]
 
     # transmitting payload that sets the keepalive timeout to 1200ms (=0x4B0)

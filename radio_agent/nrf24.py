@@ -26,6 +26,7 @@ This is a modified version of the original nrf24.py from MouseJack:
    This iterator cannot be concatenated to a list, so we got rid of the map() call. As a result, the prefix/address/payload
    are expected to be lists of integers.
 4. Moved unused constants and functions to unused.py.
+5. Added a call to enable_lna() in the constructor. Can't see a situation where we want it disabled...
 '''
 
 import usb
@@ -50,6 +51,7 @@ class nrf24:
         try:
             self.dongle = list(usb.core.find(idVendor=0x1915, idProduct=0x0102, find_all=True))[index]
             self.dongle.set_configuration()
+            self.enable_lna() # low noise amplifier
         except usb.core.USBError as ex:
             raise ex
         except:

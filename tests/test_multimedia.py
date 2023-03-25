@@ -4,8 +4,9 @@ Test for injection of multimedia keys, such as volume keys, application launch b
 
 import time
 import sys
+from os.path import dirname
 
-sys.path.append('.')
+sys.path.append(dirname(dirname(__file__)))
 from radio_agent import nrf24
 from utils.general_utils import *
 from utils.hid_scan_codes import *
@@ -15,7 +16,6 @@ def main():
 
     # initialize the radio
     radio = nrf24.nrf24()
-    radio.enable_lna()
 
     # find the frequency channel
     _ = find_address_channel(radio=radio, address=address)
