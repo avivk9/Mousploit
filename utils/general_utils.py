@@ -1,7 +1,5 @@
-import sys
 import time
-sys.path.append('.')
-from utils.hid_scan_codes import *
+from .hid_scan_codes import * # this time there is no problem doing a relative import since this file should not be executed
 
 SLEEPING_PERIOD = 12 / 1000 # ms
 PING_PAYLOAD = [0x0F, 0x0F, 0x0F, 0x0F]
@@ -68,4 +66,5 @@ def transmit_string(radio, text : str) -> bool:
     Return true for success and false if fails.
     """
     for l in text:
-        transmit_key(key=LETTERS_DICTIONARY[l], radio=radio)
+        transmit_key(key=letters_dict[l], radio=radio)
+    transmit_key(KEY_RELEASE, radio)
