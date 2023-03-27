@@ -20,7 +20,8 @@ def main():
 
     channel = find_frequency_channel(radio_server, address)
     if not channel:
-        print("Failed to find frequency channel. Try to get closer to the victim dongle.")
+        print("Failed to find frequency channel. Tell the agent to try getting closer to the victim dongle.")
+        sys.exit(1)
 
     # transmit_string(radio_server, "1123456789")
 

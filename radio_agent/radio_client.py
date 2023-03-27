@@ -15,7 +15,7 @@ IP = "127.0.0.1"
 PORT = 5000
 BUF_SIZE = 1024 # for recv parameter
 ACK = 1 # for informing the server that the command was carried out successfully, in case there's no specific data it needs to return
-DEBUG = True # enable/disable debug prints
+DEBUG = False # enable/disable debug prints
 
 def debug_print(msg):
     if DEBUG:

