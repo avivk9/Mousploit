@@ -6,6 +6,7 @@ including scanning, channel sweeping and generic attack functions.
 # no problem doing relative imports since this file should not be executed
 from .hid_scan_codes import *
 from . import logitech
+import time
 
 PING_PAYLOAD = [0x0F, 0x0F, 0x0F, 0x0F]
 
