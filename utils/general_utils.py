@@ -70,3 +70,42 @@ def transmit_keys(radio, keys, vendor=logitech):
     """
     keystrokes = [other_keys[name] for name in keys if name in other_keys.keys()] # using the other_keys dictionary (that's why characters are not allowed), eliminating key names that aren't in the dictionary
     vendor.inject_keystrokes(radio, add_key_releases(keystrokes)) # calling the vendor's function to inject keystrokes, adding key release packets using the utility function if necessary
+
+
+def scan(radio, timeout=5.0):
+    radio.enter_promiscuous_mode()
+    channel = 2
+    radio.set_channel(channel)
+    dwell_time = 0.1
+    last_tune = time.time()
+    start_time = time.time()
+
+    results_set = set() # create an empty Set to store results
+
+    while time.time() - start_time < timeout:
+        if  time.time() - last_tune > dwell_time:
+            channel = ((channel + 1) % 83) if ((channel + 1) % 83) >= 2 else 2
+            radio.set_channel(channel)
+            last_tune = time.time()
+
+        try:
+            value = radio.receive_payload()
+        except RuntimeError:
+            value = []
+        if len(value) >= 5:
+            address, payload = value[0:5], value[5:]
+            results_set.add((address, payload)) # add the address, payload pair to the Set
+            print("ch: %02d addr: %s packet: %s" % (channel, to_display(address), to_display(payload)))
+
+
+def start_scanning(radio):
+    print('Scanning for signals...')
+    try:
+        while True:
+            scan(radio, timeout=60)
+    except KeyboardInterrupt:
+        print('\n(^C) interrupted\n')
+        print('[-] Quitting')
+
+def to_display(data):
+    return ':'.join('{:02X}'.format(x) for x in data)
