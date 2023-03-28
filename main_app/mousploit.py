@@ -45,8 +45,8 @@ def main():
     args = parser.parse_args()
 
     # initialize the radio server
-    radio_server = RadioServer("0.0.0.0", 5000) # 0.0.0.0 means listen on all network interfaces, this way we don't need to change the IP in this line every time we run the server on a different computer
-    # radio_server = nrf24.nrf24() # if you want to run locally (comment out the previous line)
+    # radio_server = RadioServer("0.0.0.0", 5000) # 0.0.0.0 means listen on all network interfaces, this way we don't need to change the IP in this line every time we run the server on a different computer
+    radio_server = nrf24.nrf24() # if you want to run locally (comment out the previous line)
 
     if args.command == "attack":
         channel = find_frequency_channel(radio_server, address_str_to_bytes(args.address))
@@ -59,6 +59,7 @@ def main():
             transmit_string(radio_server, args.string)
         elif args.script_file:
             print(f"Injecting the DuckyScript at: {args.script_file} into the target dongle paired to the device with address: {args.address}")
+            parse_script_file(radio_server, args.script_file)
             
     elif args.command == "scan":
         print(f"Scanning for {args.duration} seconds...")

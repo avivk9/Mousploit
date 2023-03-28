@@ -110,3 +110,46 @@ def format_bytes(data):
 def address_str_to_bytes(rf_address):
     # e.g. E4:ED:AE:B8:B4 is converted to: [0xB4, 0xB8, 0xAE, 0xED, 0xE4]
     return list(bytes.fromhex(rf_address.replace(':', '')))[::-1]
+
+
+def parse_script_file(radio, filename):
+    """
+    Parses a Ducky-like script from a file and executes it.
+
+    Parameters:
+    filename (str): The name of the file containing the script.
+
+    Raises:
+    ValueError: If the script contains an unknown command.
+
+    """
+    with open(filename, 'r') as f:
+        script = f.read()
+        parse_script(radio, script)
+
+def parse_script(radio, script):
+    """
+    Parses a Ducky-like script and executes it.
+
+    Parameters:
+    script (str): The Ducky-like script to parse and execute.
+
+    Raises:
+    ValueError: If the script contains an unknown command.
+
+    """
+    for line in script.split('\n'):
+        parts = line.split()
+        if len(parts) == 0:
+            continue
+        command = parts[0]
+        args = parts[1:]
+        if command == 'WINDOWS':
+            transmit_keys(radio, [command])
+        elif command == 'STRING':
+            transmit_string(radio, ' '.join(args))
+        elif command == 'ENTER':
+            time.sleep(0.75)
+            transmit_keys(radio, [command])
+        else:
+            raise ValueError(f'Unknown command: {command}')
