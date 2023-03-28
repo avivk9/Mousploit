@@ -1,3 +1,7 @@
+"""
+The Mousploit CLI works by executing mousploit.py with command line arguments corresponding to the selections made by the user.
+"""
+
 import colorama
 from colorama import Fore, Style
 import sys
@@ -5,14 +9,7 @@ import os
 
 colorama.init(autoreset=True)
 
-def print_help():
-    print("""
-        Choose an option:
-        '1' - Perform a keystroke injection attack against a specified target.
-        '2' - Scan for nearby vulnerable devices.
-        '3' - Exit.
-          """)
-
+# this function prints an ASCII art of the Mousploit logo
 def print_logo():
     g = Fore.LIGHTGREEN_EX # green
     w = Style.RESET_ALL # white
@@ -37,39 +34,60 @@ def print_logo():
     """)
 
     print("Mousploit - Proof of Concept")
-    #print("Final Project in Cyber Security - College of Management")
-    print("Team: Ron Greenberg, Aviv Keinan, Itamar Azmoni, Yonatan Birman\n")
+    print("Team: Ron Greenberg, Aviv Keinan, Itamar Azmoni, Yonatan Birman")
+
+# this function prints the options for the user to choose from
+def print_options():
+    print("""
+Choose an option:
+'1' - Scan for nearby vulnerable devices.
+'2' - Perform a keystroke injection attack against a specified target.
+'3' - Exit.""")
 
 def main():
     print_logo()
+    print_options()
+
     while True:
-        print_help() # print options
-        request = input("> ")
+        selection = input("> ") # getting input from the user
+        cmd = "python mousploit.py " # beginning of command that executes mousploit.py
         
-        cmd = "python mousploit.py "
-        if request == "1": # in case of attack
-            address = input("Enter address")
-            if address != "":
+        # if the user chooses to scan
+        if selection == "1":
+            cmd += "scan "
+            duration = input("Enter scan duration in seconds (leave blank to use default): ")
+            if duration == "":
+                print("Using default duration: 20 seconds")
+            else:
+                cmd += f"--duration {duration}" # adding the proper argument to the command string
+
+        # if the user chooses to attack
+        elif selection == "2":
+            cmd += "attack "
+            address = input("Enter address (leave blank to use default): ")
+            if address == "":
+                print("Using default address: E4:ED:AE:B8:B4")
+            else:
                 cmd += f"--address {address} "
-            opt = input("""
-                        Enter '1' for string.
-                        Enter '2' for script.""")
-            if opt == '1': # inject string
-                string = input("Enter string")
-                cmd += f"--string \"{string}\""
-            elif opt == '2': # inject duckyscript
-                path = input("Enter path of duckyscript file")
+            option = input("Select injection type ('1' - string, '2' - DuckyScript): ")
+            if option == '1': # inject string
+                string = input("Enter string: ")
+                cmd += f"--string \"{string}\"" # if the string contains whitespaces, it must be surrounded with DOUBLE quotes
+            elif option == '2': # inject DuckyScript
+                path = input("Enter path of DuckyScript file: ")
                 cmd += f"--script-file \"{path}\""
 
-        elif request == "2": # in case of scan
-            duration = input("Enter duration")
-            cmd += f"scan --duration {duration}"
-
-        elif request == "3": # in case of exit
+        # if the user chooses to exit
+        elif selection == "3":
             print("bye!")
-            sys.exit()
+            sys.exit(0)
 
-        os.system(cmd)
+        # if the user types anything else, continue to prompt for input (without printing options again)
+        else:
+            continue
+        
+        os.system(cmd) # execute the command in a subshell (just like the system() function in C)
+        print_options() # print the options for next round
 
 if __name__ == '__main__':
     main()

