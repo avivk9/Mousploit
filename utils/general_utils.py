@@ -46,14 +46,19 @@ def add_key_releases(keystrokes):
     """
     This function receives a list of keystrokes (meaning a list where each element is a list of the form: [scan_code, modifier])
     that are about to be injected to a vulnerable dongle.
-    It tries to find consecutive pairs of keystrokes (meaning, one is to be transmitted immediately after the other) that are identical.
-    In this case, that same keystroke will not be typed twice unless a key release packet is placed between the original two.
+    It tries to find consecutive pairs of keystrokes (meaning, one is to be transmitted immediately after the other) where,
+    if we would type them on a keyboard in real life, we would press the same physical key (twice in a row).
+    In this case, the vulnerable dongle would not tell the target computer that the key was pressed twice, unless a key release packet is placed between the original two.
     So this function adds key release packets wherever necessary.
+    To indicate whether two consecutive keys with the same PHYSICAL LOCATION are pressed, we need to compare their scan codes ONLY and not their modifiers,
+    because scan codes correspond to the physical location of a key on the keyboard, NOT what it says on the key itself.
+    For example, the sequence 'gG' is considered as pressing the same key twice in a row, since 'g' and 'G' have the same scan code,
+    even though their modifiers are different.
     """
     new_keystrokes = []
     for i in range(len(keystrokes) - 1): # in order to not go out of range
         new_keystrokes.append(keystrokes[i]) # copying each keystroke from the original list
-        if keystrokes[i] == keystrokes[i + 1]: # checking if the next keystroke is the same (has the same scan code and same modifier)
+        if keystrokes[i][0] == keystrokes[i + 1][0]: # checking if the next keystroke has the same scan code
             new_keystrokes.append([KEY_RELEASE, KEY_MOD_NONE]) # adding a key release 
     new_keystrokes.append(keystrokes[-1]) # copying the last keystroke
     return new_keystrokes
@@ -110,46 +115,3 @@ def format_bytes(data):
 def address_str_to_bytes(rf_address):
     # e.g. E4:ED:AE:B8:B4 is converted to: [0xB4, 0xB8, 0xAE, 0xED, 0xE4]
     return list(bytes.fromhex(rf_address.replace(':', '')))[::-1]
-
-
-def parse_script_file(radio, filename):
-    """
-    Parses a Ducky-like script from a file and executes it.
-
-    Parameters:
-    filename (str): The name of the file containing the script.
-
-    Raises:
-    ValueError: If the script contains an unknown command.
-
-    """
-    with open(filename, 'r') as f:
-        script = f.read()
-        parse_script(radio, script)
-
-def parse_script(radio, script):
-    """
-    Parses a Ducky-like script and executes it.
-
-    Parameters:
-    script (str): The Ducky-like script to parse and execute.
-
-    Raises:
-    ValueError: If the script contains an unknown command.
-
-    """
-    for line in script.split('\n'):
-        parts = line.split()
-        if len(parts) == 0:
-            continue
-        command = parts[0]
-        args = parts[1:]
-        if command == 'WINDOWS':
-            transmit_keys(radio, [command])
-        elif command == 'STRING':
-            transmit_string(radio, ' '.join(args))
-        elif command == 'ENTER':
-            time.sleep(0.75)
-            transmit_keys(radio, [command])
-        else:
-            raise ValueError(f'Unknown command: {command}')

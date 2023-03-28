@@ -1,3 +1,4 @@
 WINDOWS
-STRING www.youtube.com/watch?v=dQw4w9WgXcQ
+STRING www.youtube.com/watch?v=xvFZjo5PgG0
+DELAY 750
 ENTER

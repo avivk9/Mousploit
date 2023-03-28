@@ -72,6 +72,15 @@ def inject_keystrokes(radio, keystrokes):
     is_last_key_multimedia = False
 
     for scan_code, modifier in keystrokes:
+        # special case - DELAY invoked from DuckyScript parser (modifier is the interval in ms)
+        if scan_code == KEY_DELAY:
+            # Transmitting delay_interval/10 keepalive packets with a delay of 10ms between each other,
+            # to achieve a total delay of delay_interval ms without losing the channel.
+            for i in range(modifier // 10):
+                radio.transmit_payload(KEEPALIVE_PAYLOAD)
+                time.sleep(10 / 1000)
+            return
+
         # if the current keystroke is for a multimedia key or is a key release of a previous multimedia key, then transmit a multimedia key payload
         if scan_code in multimedia_keys or (scan_code == KEY_RELEASE and is_last_key_multimedia):
             radio.transmit_payload(multimedia_key_payload(scan_code))

@@ -13,6 +13,7 @@ KEY_MOD_RMETA  = 0x80  # Keyboard Right GUI (Windows key)
 
 # General
 KEY_NONE = KEY_RELEASE = 0x00  # No key pressed / Key released
+KEY_DELAY = 0xFF # custom code we chose (not used by any other key) for parsing the DELAY command in DuckyScript as a "keystroke" in order to utilize the logic of inject_keystrokes()
 
 # Letters
 KEY_A = 0x04  # Keyboard a and A
