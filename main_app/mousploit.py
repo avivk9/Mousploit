@@ -38,7 +38,8 @@ def main():
     group = attack_cmd.add_mutually_exclusive_group(required=True) # either a string or a script file path must be specified, but not both
     group.add_argument("--string", type=str, help="A string of characters to be injected into the target") # if the string contains whitespaces, it must be surrounded with DOUBLE quotes
     group.add_argument("--script-file", type=str, help="Path of a DuckyScript file")
-
+    group.add_argument("--keyboard-live", action="store_true", help="Listens to your keyboard and inject the keys you enter")
+    
     # arguments for scan
     scan_cmd.add_argument("--duration", type=int, required=False, default=20, help="Duration of the scanning process (in seconds)")
 
@@ -61,7 +62,9 @@ def main():
         elif args.script_file:
             print(f"Injecting the DuckyScript at: {args.script_file} into the target dongle paired to the device with address: {args.address}")
             parse_script_file(radio_server, args.script_file)
-            
+        elif args.keyboard_live: # if --keyboard-live tag was added (with attack tag) apply transmit from keyboard
+            transmit_string_from_keyboard(radio=radio_server)
+
     elif args.command == "scan":
         print(f"Scanning for {args.duration} seconds...")
         scan(radio_server, args.duration)

@@ -64,7 +64,7 @@ def add_key_releases(keystrokes):
     new_keystrokes.append(keystrokes[-1]) # copying the last keystroke
     return new_keystrokes
 
-def transmit_string_while_writing(radio, vendor=logitech):
+def transmit_string_from_keyboard(radio, vendor=logitech):
     """
     This function will listen to the client keyboard and for each key press will transmit that key
     """

@@ -69,13 +69,15 @@ def main():
                 print("Using default address: E4:ED:AE:B8:B4")
             else:
                 cmd += f"--address {address} "
-            option = input("Select injection type ('1' - string, '2' - DuckyScript): ")
+            option = input("Select injection type ('1' - string, '2' - DuckyScript, '3' - From your keyboard to victim keyboard): ")
             if option == '1': # inject string
                 string = input("Enter string: ")
                 cmd += f"--string \"{string}\"" # if the string contains whitespaces, it must be surrounded with DOUBLE quotes
             elif option == '2': # inject DuckyScript
                 path = input("Enter path of DuckyScript file: ")
                 cmd += f"--script-file \"{path}\""
+            elif option == '3':
+                cmd += f"--keyboard-live"
 
         # if the user chooses to exit
         elif selection == "3":
