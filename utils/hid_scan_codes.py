@@ -1,3 +1,5 @@
+from pynput import keyboard # for live mode
+
 # refer to: https://gist.github.com/MightyPork/6da26e382a7ad91b5496ee55fdc73db2
 
 # Modifiers
@@ -269,4 +271,53 @@ other_keys = {
     'MUTE':                [KEY_FN_F9, KEY_MOD_NONE],
     'VOL_DOWN':            [KEY_FN_F10, KEY_MOD_NONE],
     'VOL_UP':              [KEY_FN_F11, KEY_MOD_NONE]
+}
+
+# A dictionary that maps key definitions from the pynput.keyboard module to their respective names that can be provided to other_keys, in order to get their [scan_code, modifier] pairs.
+# It is used as part of the live mode, which listens for keystrokes using pynput in order to transmit them to the victim.
+live_mode_dict = {
+    keyboard.Key.alt:          'ALT',
+    keyboard.Key.alt_l:        'ALT',
+    keyboard.Key.alt_r:        'ALT',
+    keyboard.Key.alt_gr:       'ALT',
+    keyboard.Key.backspace:    'BACKSPACE',
+    keyboard.Key.caps_lock:    'CAPSLOCK',
+    keyboard.Key.cmd:          'WINDOWS',
+    keyboard.Key.cmd_l:        'WINDOWS',
+    keyboard.Key.cmd_r:        'WINDOWS',
+    keyboard.Key.ctrl:         'CTRL',
+    keyboard.Key.ctrl_l:       'CTRL',
+    keyboard.Key.ctrl_r:       'CTRL',
+    keyboard.Key.delete:       'DELETE',
+    keyboard.Key.down:         'DOWN',
+    keyboard.Key.end:          'END',
+    keyboard.Key.enter:        'ENTER',
+    keyboard.Key.esc:          'ESC',
+    keyboard.Key.f1:           'F1',
+    keyboard.Key.f2:           'F2',
+    keyboard.Key.f3:           'F3',
+    keyboard.Key.f4:           'F4',
+    keyboard.Key.f5:           'F5',
+    keyboard.Key.f6:           'F6',
+    keyboard.Key.f7:           'F7',
+    keyboard.Key.f8:           'F8',
+    keyboard.Key.f9:           'F9',
+    keyboard.Key.f10:          'F10',
+    keyboard.Key.f11:          'F11',
+    keyboard.Key.f12:          'F12',
+    keyboard.Key.home:         'HOME',
+    keyboard.Key.left:         'LEFT',
+    keyboard.Key.page_down:    'PAGEDOWN',
+    keyboard.Key.page_up:      'PAGEUP',
+    keyboard.Key.right:        'RIGHT',
+    keyboard.Key.shift:        'SHIFT',
+    keyboard.Key.shift_l:      'SHIFT',
+    keyboard.Key.shift_r:      'SHIFT',
+    keyboard.Key.space:        'SPACE',
+    keyboard.Key.tab:          'TAB',
+    keyboard.Key.up:           'UP',
+    keyboard.Key.insert:       'INSERT',
+    keyboard.Key.pause:        'PAUSE',
+    keyboard.Key.print_screen: 'PRINTSCREEN',
+    keyboard.Key.scroll_lock:  'SCROLLLOCK'
 }

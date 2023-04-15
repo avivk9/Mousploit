@@ -33,7 +33,7 @@ def print_logo():
  /_________________________________________________________\
     """)
 
-    print("Mousploit - Proof of Concept")
+    print("Mousploit")
     print("Team: Ron Greenberg, Aviv Keinan, Itamar Azmoni, Yonatan Birman")
 
 # this function prints the options for the user to choose from
@@ -50,7 +50,8 @@ def main():
 
     while True:
         selection = input("> ") # getting input from the user
-        cmd = "python mousploit.py " # beginning of command that executes mousploit.py
+        mousploit_py_path = os.path.dirname(__file__) + "\\mousploit.py " # getting path of mousploit.py regardless of the current working directory
+        cmd = "python " + mousploit_py_path # beginning of command that executes mousploit.py
         
         # if the user chooses to scan
         if selection == "1":
@@ -69,15 +70,15 @@ def main():
                 print("Using default address: E4:ED:AE:B8:B4")
             else:
                 cmd += f"--address {address} "
-            option = input("Select injection type ('1' - string, '2' - DuckyScript, '3' - From your keyboard to victim keyboard): ")
+            option = input("Select injection type ('1' - string, '2' - DuckyScript, '3' - Live mode): ")
             if option == '1': # inject string
                 string = input("Enter string: ")
                 cmd += f"--string \"{string}\"" # if the string contains whitespaces, it must be surrounded with DOUBLE quotes
             elif option == '2': # inject DuckyScript
                 path = input("Enter path of DuckyScript file: ")
                 cmd += f"--script-file \"{path}\""
-            elif option == '3':
-                cmd += f"--keyboard-live"
+            elif option == '3': # live mode
+                cmd += "--live-mode"
 
         # if the user chooses to exit
         elif selection == "3":
