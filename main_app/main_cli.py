@@ -41,8 +41,9 @@ def print_options():
     print("""
 Choose an option:
 '1' - Scan for nearby vulnerable devices.
-'2' - Perform a keystroke injection attack against a specified target.
-'3' - Exit.""")
+'2' - Sniff packets from a specified device.
+'3' - Perform a keystroke injection attack against a specified target.
+'4' - Exit.""")
 
 def main():
     print_logo()
@@ -61,9 +62,25 @@ def main():
                 print("Using default duration: 20 seconds")
             else:
                 cmd += f"--duration {duration}" # adding the proper argument to the command string
+        
+        # if the user chooses to sniff
+        elif selection == "2":
+            cmd += "sniff "
+
+            address = input("Enter address (leave blank to use default): ")
+            if address == "":
+                print("Using default address: E4:ED:AE:B8:B4")
+            else:
+                cmd += f"--address {address} " # adding the proper argument to the command string
+
+            duration = input("Enter scan duration in seconds (leave blank to use default): ")
+            if duration == "":
+                print("Using default duration: 20 seconds")
+            else:
+                cmd += f"--duration {duration}" # adding the proper argument to the command string
 
         # if the user chooses to attack
-        elif selection == "2":
+        elif selection == "3":
             cmd += "attack "
             address = input("Enter address (leave blank to use default): ")
             if address == "":
@@ -81,7 +98,7 @@ def main():
                 cmd += "--live-mode"
 
         # if the user chooses to exit
-        elif selection == "3":
+        elif selection == "4":
             print("bye!")
             sys.exit(0)
 

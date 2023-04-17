@@ -34,7 +34,7 @@ def main():
     subparser = parser.add_subparsers(dest="command", title="required commands", help="Select one of:") # command can either be "attack" or "scan"
     attack_cmd = subparser.add_parser("attack", help="Perform a keystroke injection attack against a specified target")
     scan_cmd = subparser.add_parser("scan", help="Scan for nearby vulnerable devices")
-    sniff_cmd = subparser.add_parser("sniff", help="Sniff packets from the given address")
+    sniff_cmd = subparser.add_parser("sniff", help="Sniff packets from a specified device")
 
     # defining arguments for "attack"
     attack_cmd.add_argument("--address", type=str, required=False, default="E4:ED:AE:B8:B4", help="RF address of a vulnerable device")
