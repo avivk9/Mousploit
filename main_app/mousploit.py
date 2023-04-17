@@ -8,6 +8,7 @@ from radio_agent import nrf24
 from utils.general_utils import *
 from utils.script_parser import *
 from utils.scan import *
+from utils.sniff import *
 from utils.live_mode import *
 
 """
@@ -33,6 +34,7 @@ def main():
     subparser = parser.add_subparsers(dest="command", title="required commands", help="Select one of:") # command can either be "attack" or "scan"
     attack_cmd = subparser.add_parser("attack", help="Perform a keystroke injection attack against a specified target")
     scan_cmd = subparser.add_parser("scan", help="Scan for nearby vulnerable devices")
+    sniff_cmd = subparser.add_parser("sniff", help="Sniff packets from the given address")
 
     # defining arguments for "attack"
     attack_cmd.add_argument("--address", type=str, required=False, default="E4:ED:AE:B8:B4", help="RF address of a vulnerable device")
@@ -44,6 +46,9 @@ def main():
     # arguments for scan
     scan_cmd.add_argument("--duration", type=int, required=False, default=20, help="Duration of the scanning process (in seconds)")
 
+    # arguments for sniff
+    sniff_cmd.add_argument("--address", type=str, required=False, default="E4:ED:AE:B8:B4", help="RF address of a vulnerable device")
+    sniff_cmd.add_argument("--duration", type=int, required=False, default=20, help="Duration of the sniffing process (in seconds)")
     parser.epilog = f"""commands usage:\n{attack_cmd.format_usage()}{scan_cmd.format_usage()}""" # text added to the end of the help message (shown when using -h or calling parser.print_help())
     # parser.print_help()
     args = parser.parse_args() # parse the arguments
@@ -75,6 +80,10 @@ def main():
     elif args.command == "scan":
         print(f"Scanning for {args.duration} seconds...")
         scan(radio_server, args.duration)
+
+    elif args.command == "sniff":
+        print(f"Sniffing packets from the target keyboard with address: {args.address}")
+        sniff(radio_server, args.address, args.duration)
 
 if __name__ == "__main__":
     main()
