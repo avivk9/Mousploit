@@ -1,5 +1,5 @@
 WINDOWS
-DELAY 1000
+DELAY 750
 STRING www.youtube.com/watch?v=xvFZjo5PgG0
 DELAY 750
 ENTER

