@@ -74,9 +74,11 @@ def main():
         elif data[0] == TRANSMIT_PAYLOAD:
             debug_print("Received: TRANSMIT_PAYLOAD")
             payload_len = data[1]
-            payload = list(data[2:2 + payload_len]) # we have to convert bytes to list before passing the payload as parameter to transmit_payload()
+            timeout = data[2]
+            retransmits = data[3]
+            payload = list(data[4:4 + payload_len]) # we have to convert bytes to list before passing the payload as parameter to transmit_payload()
             debug_print(f"Payload: {payload}")
-            ret = radio.transmit_payload(payload) # return value determines whether an ACK response was received from the dongle. We should forward it as-is to the server
+            ret = radio.transmit_payload(payload, timeout, retransmits) # return value determines whether an ACK response was received from the dongle. We should forward it as-is to the server
             sock.sendall(bytes([ret]))
 
         elif data[0] == SET_CHANNEL:

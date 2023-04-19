@@ -93,7 +93,7 @@ def main():
 
     elif args.command == "sniff":
         print(f"Sniffing packets from the target device with address: {args.address}")
-        sniff(radio_server, args.address, args.duration)
+        sniff(radio_server, address_str_to_bytes(args.address), args.duration)
 
 if __name__ == "__main__":
     main()

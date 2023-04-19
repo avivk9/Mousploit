@@ -11,10 +11,11 @@ from . import logitech
 PING_PAYLOAD = [0x0F, 0x0F, 0x0F, 0x0F] # the arbitrary ping payload used in find_frequency_channel()
 CHANNELS = range(2, 84) # the range of channels for channel sweeping and scanning (why this range was chosen is explained in find_frequency_channel())
 
-def find_frequency_channel(radio):
+def find_frequency_channel(radio, timeout=4, retransmits=15):
     """
     This function receives a radio parameter (can either be a RadioServer for remote attack, or nrf24 for local attack),
     assuming the radio was already configured with the RF address of the vulnerable device (by calling enter_sniffer_mode()).
+    It may also receive additional parameters to be passed to the transmit_payload() call (as required for sniffing, for example).
     It identifies the frequency channel used by the victim dongle to communicate with that device, by pretending to be that device
     and repeatedly sending an arbitrary "ping" payload to the victim dongle, using a different channel each time.
     The function continues with this process until an ACK is received from the dongle, meaning we found the right channel.
@@ -32,7 +33,7 @@ def find_frequency_channel(radio):
     # To be more safe, an upper bound of 84 is used, based on: https://github.com/BastilleResearch/nrf-research-firmware/blob/master/tools/lib/common.py#L33
     for channel in CHANNELS:
         radio.set_channel(channel)
-        if radio.transmit_payload(PING_PAYLOAD): # transmitting the payload; the function returns true if a response was received
+        if radio.transmit_payload(PING_PAYLOAD, timeout, retransmits): # transmitting the payload; the function returns true if a response was received
             print(f'found channel: {channel}')
             return channel
     return None

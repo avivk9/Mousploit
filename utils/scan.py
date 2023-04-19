@@ -1,11 +1,12 @@
 import time
 from .general_utils import *
+from .packet_identifier import *
 
 DWELL_TIME = 0.1 # how long (in seconds) the radio listens for packets per channel
 
 def scan(radio, duration=20):
     """
-    This function receives a radio parameter (can either be a RadioServer for remote attack, or nrf24 for local attack)
+    This function receives a radio parameter (can either be a RadioServer for remote communication, or nrf24 for local usage)
     and the duration of the scanning process (in seconds). It performs a scan that detects radio packets transmitted from vulnerable devices,
     by using the promiscuous mode implemented in the firmware, that allows the attacking dongle to receive any valid frame from any address.
     """
@@ -29,4 +30,4 @@ def scan(radio, duration=20):
         if len(value) >= 5: # meaning that the packet at least contains an RF address
             address, payload = value[0:5], value[5:] # splitting the packet - address is first 5 bytes, payload is the rest
             if len(payload) > 0: # some packets containing only an address without a payload have been observed, so we don't want to print them
-                print(f"address: {format_bytes(address)}    packet: {format_bytes(payload)}")
+                print(f"address: {format_bytes(address)}    packet: {format_bytes(payload):<65}    type: {types[identify_type(payload)]}")

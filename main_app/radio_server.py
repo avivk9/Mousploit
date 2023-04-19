@@ -51,8 +51,8 @@ class RadioServer:
         payload = self.get_response()
         return payload if isinstance(payload, list) else [payload] # making sure to put the response in a list in case it's 1 byte long, and would be returned as an int from get_response(), as a result
 
-    def transmit_payload(self, payload):
-        self.connection.sendall(bytes([TRANSMIT_PAYLOAD, len(payload)] + payload)) # like in enter_sniffer_mode
+    def transmit_payload(self, payload, timeout=4, retransmits=15):
+        self.connection.sendall(bytes([TRANSMIT_PAYLOAD, len(payload), timeout, retransmits] + payload)) # like in enter_sniffer_mode
         return self.get_response()
 
     def set_channel(self, channel):
