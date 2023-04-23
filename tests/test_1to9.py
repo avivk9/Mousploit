@@ -28,7 +28,8 @@ def main():
     # initialize the radio
     radio = nrf24.nrf24()
 
-    channel = find_frequency_channel(radio, address)
+    radio.enter_sniffer_mode(address)
+    channel = find_frequency_channel(radio)
     if not channel:
         print("Failed to find frequency channel. Try to get closer to the victim dongle.")
         sys.exit(1)
