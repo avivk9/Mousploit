@@ -26,7 +26,6 @@ def parse_script(radio, script):
 
     Raises:
     ValueError: If the script contains an unknown command.
-
     """
     for line in script.split('\n'):
         parts = line.split()
@@ -34,7 +33,9 @@ def parse_script(radio, script):
             continue
         command = parts[0]
         args = parts[1:]
-        if command == 'WINDOWS':
+        if command == 'REM':
+            print(' '.join(args))
+        elif command == 'WINDOWS':
             transmit_keys(radio, [command])
         elif command == 'STRING':
             transmit_string(radio, ' '.join(args))
@@ -43,6 +44,9 @@ def parse_script(radio, script):
             logitech.inject_keystrokes(radio, [[KEY_DELAY, int(args[0])]])
         elif command == 'ENTER':
             transmit_keys(radio, [command])
+        elif command == 'CTRL-SHIFT' and args[0] == 'ENTER':
+            transmit_keys(radio, ['CTRL', 'SHIFT', 'ENTER'])
+        elif command == 'ALT' and args[0] == 'y':
+            transmit_keys(radio, ['ALT', 'y'])
         else:
             raise ValueError(f'Unknown command: {command}')
-        
