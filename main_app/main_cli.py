@@ -10,6 +10,12 @@ from os.path import dirname
 
 SCRIPTS_DIR = dirname(dirname(__file__)) + "\\scripts" # "scripts" folder is a subfolder of the project root
 
+# mapping menu options to values that can be passed as the vendor argument
+vendors = {
+    "1": "logitech",
+    "2": "microsoft"
+}
+
 # this function prints an ASCII art of the Mousploit logo
 def print_logo():
     g = Fore.LIGHTGREEN_EX # green
@@ -91,11 +97,17 @@ def main():
             else:
                 cmd += f"--address {address} "
 
+            # vendor selection
+            print("\nSupported vendors:\n1. Logitech\n2. Microsoft")
+            vendor = input("\nSelect device vendor: ")
+            if vendor in vendors:
+                cmd += f"--vendor {vendors[vendor]} "
+
             option = input("Select injection type ('1' - string, '2' - DuckyScript, '3' - Live mode): ")
-            if option == '1': # inject string
+            if option == "1": # inject string
                 string = input("Enter string: ")
                 cmd += f"--string \"{string}\"" # if the string contains whitespaces, it must be surrounded with DOUBLE quotes
-            elif option == '2': # inject DuckyScript
+            elif option == "2": # inject DuckyScript
                 scripts = os.listdir(SCRIPTS_DIR) # get a list of all filenames from the scripts directory
                 print("\nAvailable scripts:")
                 for i in range(len(scripts)):
@@ -117,5 +129,5 @@ def main():
         os.system(cmd) # execute the command in a subshell (just like the system() function in C)
         print_options() # print the options for next round
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,12 +1,13 @@
 import socket
 
 # custom codes for possible commands that the server can send to the agent
-ENTER_PROMISCUOUS_MODE = 1
-ENTER_SNIFFER_MODE     = 2
-RECEIVE_PAYLOAD        = 3
-TRANSMIT_PAYLOAD       = 4
-SET_CHANNEL            = 5
-GET_CHANNEL            = 6
+ENTER_PROMISCUOUS_MODE         = 1
+ENTER_PROMISCUOUS_MODE_GENERIC = 2
+ENTER_SNIFFER_MODE             = 3
+RECEIVE_PAYLOAD                = 4
+TRANSMIT_PAYLOAD               = 5
+SET_CHANNEL                    = 6
+GET_CHANNEL                    = 7
 
 # constants
 BUF_SIZE = 1024 # for recv parameter
@@ -38,6 +39,10 @@ class RadioServer:
 
     def enter_promiscuous_mode(self):
         self.connection.sendall(bytes([ENTER_PROMISCUOUS_MODE]))
+        return self.get_response()
+    
+    def enter_promiscuous_mode_generic(self, prefix, rate, payload_length=32):
+        self.connection.sendall(bytes([ENTER_PROMISCUOUS_MODE_GENERIC, len(prefix), rate, payload_length] + prefix))
         return self.get_response()
 
     def enter_sniffer_mode(self, rf_address):

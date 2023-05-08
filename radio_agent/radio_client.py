@@ -3,12 +3,13 @@ import time
 import nrf24
 
 # custom codes for possible commands that the server can send to the agent
-ENTER_PROMISCUOUS_MODE = 1
-ENTER_SNIFFER_MODE     = 2
-RECEIVE_PAYLOAD        = 3
-TRANSMIT_PAYLOAD       = 4
-SET_CHANNEL            = 5
-GET_CHANNEL            = 6
+ENTER_PROMISCUOUS_MODE         = 1
+ENTER_PROMISCUOUS_MODE_GENERIC = 2
+ENTER_SNIFFER_MODE             = 3
+RECEIVE_PAYLOAD                = 4
+TRANSMIT_PAYLOAD               = 5
+SET_CHANNEL                    = 6
+GET_CHANNEL                    = 7
 
 # constants
 IP = "127.0.0.1"
@@ -56,6 +57,15 @@ def main():
         if data[0] == ENTER_PROMISCUOUS_MODE:
             debug_print("Received: ENTER_PROMISCUOUS_MODE")
             radio.enter_promiscuous_mode()
+            sock.sendall(bytes([ACK]))
+
+        elif data[0] == ENTER_PROMISCUOUS_MODE_GENERIC:
+            debug_print("Received: ENTER_PROMISCUOUS_MODE_GENERIC")
+            prefix_len = data[1]
+            rate = data[2]
+            payload_length = data[3]
+            prefix = list(data[4:4 + prefix_len])
+            radio.enter_promiscuous_mode_generic(prefix, rate, payload_length)
             sock.sendall(bytes([ACK]))
 
         elif data[0] == ENTER_SNIFFER_MODE:

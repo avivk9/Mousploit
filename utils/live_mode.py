@@ -1,6 +1,6 @@
 import time
 from pynput import keyboard # library for controlling and monitoring input devices
-from . import logitech
+from .vendors import logitech
 from .hid_scan_codes import *
 from .general_utils import *
 
@@ -82,5 +82,5 @@ def live_mode(radio, vendor=logitech):
         else:
             # transmit keepalives all the time when no key is pressed
             time.sleep(DELAY_BETWEEN_TRANSMISSIONS)
-            if vendor == logitech:
-                try_transmit(radio, logitech.KEEPALIVE_PAYLOAD)
+            try_transmit(radio, vendor.KEEPALIVE_PAYLOAD)
+            

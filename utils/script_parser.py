@@ -1,8 +1,8 @@
 from .general_utils import *
 from .hid_scan_codes import *
-from . import logitech
+from .vendors import logitech
 
-def parse_script_file(radio, filename):
+def parse_script_file(radio, filename, vendor=logitech):
     """
     Parses a Ducky-like script from a file and executes it.
 
@@ -15,9 +15,9 @@ def parse_script_file(radio, filename):
     """
     with open(filename, 'r') as f:
         script = f.read()
-        parse_script(radio, script)
+        parse_script(radio, script, vendor)
 
-def parse_script(radio, script):
+def parse_script(radio, script, vendor=logitech):
     """
     Parses a Ducky-like script and executes it.
 
@@ -36,17 +36,17 @@ def parse_script(radio, script):
         if command == 'REM':
             print(' '.join(args))
         elif command == 'WINDOWS':
-            transmit_keys(radio, [command])
+            transmit_keys(radio, [command], vendor)
         elif command == 'STRING':
-            transmit_string(radio, ' '.join(args))
+            transmit_string(radio, ' '.join(args), vendor)
         elif command == 'DELAY':
             # patch: treating DELAY as a "keystroke" passed to inject_keystrokes(), by using a custom scan code defined for this purpose, and passing the interval (in ms) through the modifier
-            logitech.inject_keystrokes(radio, [[KEY_DELAY, int(args[0])]])
+            inject_keystrokes(radio, [[KEY_DELAY, int(args[0])]], vendor)
         elif command == 'ENTER':
-            transmit_keys(radio, [command])
+            transmit_keys(radio, [command], vendor)
         elif command == 'CTRL-SHIFT' and args[0] == 'ENTER':
-            transmit_keys(radio, ['CTRL', 'SHIFT', 'ENTER'])
+            transmit_keys(radio, ['CTRL', 'SHIFT', 'ENTER'], vendor)
         elif command == 'ALT' and args[0] == 'y':
-            transmit_keys(radio, ['ALT', 'y'])
+            transmit_keys(radio, ['ALT', 'y'], vendor)
         else:
             raise ValueError(f'Unknown command: {command}')
