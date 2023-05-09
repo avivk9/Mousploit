@@ -34,7 +34,7 @@ def parse_script(radio, script, vendor=logitech):
         command = parts[0]
         args = parts[1:]
         if command == 'REM':
-            print(' '.join(args))
+            continue
         elif command == 'WINDOWS':
             transmit_keys(radio, [command], vendor)
         elif command == 'STRING':
@@ -42,11 +42,9 @@ def parse_script(radio, script, vendor=logitech):
         elif command == 'DELAY':
             # patch: treating DELAY as a "keystroke" passed to inject_keystrokes(), by using a custom scan code defined for this purpose, and passing the interval (in ms) through the modifier
             inject_keystrokes(radio, [[KEY_DELAY, int(args[0])]], vendor)
-        elif command == 'ENTER':
+        elif command == 'CTRL-SHIFT':
+            inject_keystrokes(radio, [[other_keys[args[0]][0], KEY_MOD_LCTRL | KEY_MOD_RSHIFT]], vendor)
+        elif command in other_keys.keys():
             transmit_keys(radio, [command], vendor)
-        elif command == 'CTRL-SHIFT' and args[0] == 'ENTER':
-            transmit_keys(radio, ['CTRL', 'SHIFT', 'ENTER'], vendor)
-        elif command == 'ALT' and args[0] == 'y':
-            transmit_keys(radio, ['ALT', 'y'], vendor)
         else:
             raise ValueError(f'Unknown command: {command}')

