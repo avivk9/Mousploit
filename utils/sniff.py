@@ -1,6 +1,7 @@
 import time
 from .general_utils import *
 from .packet_identifier import *
+from .vendors import eagletec
 
 TIMEOUT = 0.1 # how long (in seconds) the radio can stay on the current channel before it needs to send a ping or find the channel again, because it's been too long since a packet was received
 
@@ -11,6 +12,11 @@ def sniff(radio, address, duration=20):
     It performs packet sniffing - printing packets that arrive from that particular device within the given time duration.
     Sniffing is much more sensitive than scanning, so we should be able to observe packets resulting from even the slightest mouse movement.
     """
+
+    # MOSART-based devices (like EagleTec) have 4-byte addresses
+    if len(address) == 4:
+        eagletec.sniff(radio, address, duration)
+        return
 
     radio.enter_sniffer_mode(address) # sending a command to enter sniffer mode with the given address
 

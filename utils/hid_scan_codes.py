@@ -1,4 +1,4 @@
-from pynput import keyboard # for live mode
+from pynput import keyboard
 
 # refer to: https://gist.github.com/MightyPork/6da26e382a7ad91b5496ee55fdc73db2
 
@@ -273,9 +273,33 @@ other_keys = {
     'VOL_UP':              [KEY_FN_F11, KEY_MOD_NONE]
 }
 
-# A dictionary that maps key definitions from the pynput.keyboard module to their respective names that can be provided to other_keys, in order to get their [scan_code, modifier] pairs.
-# It is used as part of the live mode, which listens for keystrokes using pynput in order to transmit them to the victim.
-live_mode_dict = {
+
+#----------------------------------------PYNPUT----------------------------------------
+
+# Virtual-Key Codes for Keypad (refer to: https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes)
+VK_NUMPAD0     = keyboard.KeyCode.from_vk(0x60) # Keypad 0 and Insert
+VK_NUMPAD1     = keyboard.KeyCode.from_vk(0x61) # Keypad 1 and End
+VK_NUMPAD2     = keyboard.KeyCode.from_vk(0x62) # Keypad 2 and Down Arrow
+VK_NUMPAD3     = keyboard.KeyCode.from_vk(0x63) # Keypad 3 and PageDn
+VK_NUMPAD4     = keyboard.KeyCode.from_vk(0x64) # Keypad 4 and Left Arrow
+VK_NUMPAD5     = keyboard.KeyCode.from_vk(0x65) # Keypad 5
+VK_NUMPAD6     = keyboard.KeyCode.from_vk(0x66) # Keypad 6 and Right Arrow
+VK_NUMPAD7     = keyboard.KeyCode.from_vk(0x67) # Keypad 7 and Home
+VK_NUMPAD8     = keyboard.KeyCode.from_vk(0x68) # Keypad 8 and Up Arrow
+VK_NUMPAD9     = keyboard.KeyCode.from_vk(0x69) # Keypad 9 and Page Up
+VK_MULTIPLY    = keyboard.KeyCode.from_vk(0x6A) # Keypad *
+VK_ADD         = keyboard.KeyCode.from_vk(0x6B) # Keypad +
+VK_SUBTRACT    = keyboard.KeyCode.from_vk(0x6D) # Keypad -
+VK_DECIMAL     = keyboard.KeyCode.from_vk(0x6E) # Keypad . and Delete
+VK_DIVIDE      = keyboard.KeyCode.from_vk(0x6F) # Keypad /
+
+# A dictionary that maps key definitions from the pynput.keyboard module to their respective names. It has two main uses:
+# 1. The key names can be provided to other_keys in order to get their [scan_code, modifier] pairs. This is utilized
+#    as part of the live mode, which listens for keystrokes using pynput in order to transmit them to the victim.
+# 2. As part of keylogging from the unencrypted EagleTec keyboard, the sniffed keystrokes are typed into this computer
+#    using a pynput.keyboard.Controller, and a pynput.keyboard.Listener is also used in order to capture them.
+#    Non-character/Keypad keys are logged using this dictionary.
+pynput_dict = {
     keyboard.Key.alt:          'ALT',
     keyboard.Key.alt_l:        'ALT',
     keyboard.Key.alt_r:        'ALT',
@@ -319,5 +343,25 @@ live_mode_dict = {
     keyboard.Key.insert:       'INSERT',
     keyboard.Key.pause:        'PAUSE',
     keyboard.Key.print_screen: 'PRINTSCREEN',
-    keyboard.Key.scroll_lock:  'SCROLLLOCK'
+    keyboard.Key.scroll_lock:  'SCROLLLOCK',
+    keyboard.Key.menu:         'MENU',
+    keyboard.Key.num_lock:     'NUMLOCK',
+    VK_NUMPAD0:                'Keypad 0',
+    VK_NUMPAD1:                'Keypad 1',
+    VK_NUMPAD2:                'Keypad 2',
+    VK_NUMPAD3:                'Keypad 3',
+    VK_NUMPAD4:                'Keypad 4',
+    VK_NUMPAD5:                'Keypad 5',
+    VK_NUMPAD6:                'Keypad 6',
+    VK_NUMPAD7:                'Keypad 7',
+    VK_NUMPAD8:                'Keypad 8',
+    VK_NUMPAD9:                'Keypad 9',
+    VK_MULTIPLY:               '*',
+    VK_ADD:                    '+',
+    VK_SUBTRACT:               '-',
+    VK_DECIMAL:                '.',
+    VK_DIVIDE:                 '/'
 }
+
+pynput_modifiers = [keyboard.Key.alt, keyboard.Key.alt_l, keyboard.Key.alt_r, keyboard.Key.alt_gr, keyboard.Key.cmd, keyboard.Key.cmd_l, keyboard.Key.cmd_r,
+                     keyboard.Key.ctrl, keyboard.Key.ctrl_l, keyboard.Key.ctrl_r, keyboard.Key.shift, keyboard.Key.shift_l, keyboard.Key.shift_r]

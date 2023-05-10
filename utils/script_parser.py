@@ -28,6 +28,8 @@ def parse_script(radio, script, vendor=logitech):
     ValueError: If the script contains an unknown command.
     """
     for line in script.split('\n'):
+        if not line.strip(): # ignore empty lines
+            continue
         parts = line.split()
         if len(parts) == 0:
             continue
@@ -36,7 +38,11 @@ def parse_script(radio, script, vendor=logitech):
         if command == 'REM':
             continue
         elif command == 'WINDOWS':
-            transmit_keys(radio, [command], vendor)
+            if args:
+                scan_code = other_keys[args[0]][0]
+            else:
+                scan_code = KEY_NONE
+            inject_keystrokes(radio, [[scan_code, KEY_MOD_LMETA]], vendor)
         elif command == 'STRING':
             transmit_string(radio, ' '.join(args), vendor)
         elif command == 'DELAY':

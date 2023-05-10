@@ -67,7 +67,7 @@ def live_mode(radio, vendor=logitech):
             if isinstance(pressed_key, str): # if a character was pressed, take its scan code and modifier from the printable_characters dictionary
                 scan_code, modifier = printable_characters[pressed_key]
             elif isinstance(pressed_key, keyboard.Key): # if a non-character key was pressed, take its scan code and modifier using the special dictionary
-                scan_code, modifier = other_keys[live_mode_dict[pressed_key]]
+                scan_code, modifier = other_keys[pynput_dict[pressed_key]]
 
             # transmit the proper frame
             try_transmit(radio, vendor.build_frame(scan_code, modifier))
