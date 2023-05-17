@@ -8,7 +8,7 @@ import sys
 import os
 from os.path import dirname
 
-SCRIPTS_DIR = dirname(dirname(__file__)) + "\\scripts" # "scripts" folder is a subfolder of the project root
+SCRIPTS_DIR = dirname(dirname(__file__)) + "/scripts" # "scripts" folder is a subfolder of the project root
 
 # mapping menu options to values that can be passed as the vendor argument
 vendors = {
@@ -59,7 +59,7 @@ def main():
 
     while True:
         selection = input("> ") # getting input from the user
-        mousploit_py_path = os.path.dirname(__file__) + "\\mousploit.py " # getting path of mousploit.py regardless of the current working directory
+        mousploit_py_path = os.path.dirname(__file__) + "/mousploit.py " # getting path of mousploit.py regardless of the current working directory
         cmd = "python " + mousploit_py_path # beginning of command that executes mousploit.py
         
         # if the user chooses to scan
@@ -113,7 +113,7 @@ def main():
                 for i in range(len(scripts)):
                     print((f"{i + 1}. {scripts[i]}")) # print a numbered list of the script filenames
                 num = int(input("\nEnter selection: "))
-                cmd += f"--script-file \"{SCRIPTS_DIR}\\{scripts[num - 1]}\""
+                cmd += f"--script-file \"{SCRIPTS_DIR}/{scripts[num - 1]}\""
             elif option == '3': # live mode
                 cmd += "--live-mode"
 

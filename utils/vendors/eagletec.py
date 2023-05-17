@@ -131,12 +131,16 @@ def get_key_name(key):
         return pynput_dict[key]
 
 def on_press(key):
+    global message
     if message:
         print(message + f"    key {get_key_name(key)} pressed")
+    message = ""
 
 def on_release(key):
+    global message
     if message:
         print(message + f"    key {get_key_name(key)} released")
+    message = ""
 
 def sniff(radio, address, duration):
     global message
