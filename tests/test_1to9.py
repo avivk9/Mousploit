@@ -22,7 +22,7 @@ def main():
     # https://github.com/BastilleResearch/nrf-research-firmware/blob/master/src/radio.c#L98
     # According to page 53 here: https://www.rcscomponents.kiev.ua/datasheets/nrf24lu1-f16q32-t.pdf, data bytes in SPI commands must be ordered from LSByte to MSByte.
     address = [0xB4, 0xB8, 0xAE, 0xED, 0xE4]
-    #address = [0xA4, 0x35, 0xE3, 0x7C, 0x81] # Birman mouse
+    #address = [0xA4, 0x35, 0xE3, 0x7C, 0x81] 81:7C:E3:35:A4 # Birman mouse
     #address = [0xA4, 0x0C, 0xA8, 0xAB, 0xFA] # FA:AB:A8:0C:A4 is an RF address of a Logitech MK345 mouse that I (Ron) own
 
     # initialize the radio

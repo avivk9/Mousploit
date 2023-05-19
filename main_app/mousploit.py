@@ -61,8 +61,8 @@ def main():
     args = parser.parse_args() # parse the arguments
 
     # initialize the radio server
-    radio_server = RadioServer("0.0.0.0", 5000) # 0.0.0.0 means listen on all network interfaces, this way we don't need to change the IP in this line every time we run the server on a different computer
-    # radio_server = nrf24.nrf24() # if you want to run locally (comment out the previous line)
+    # radio_server = RadioServer("0.0.0.0", 5000) # 0.0.0.0 means listen on all network interfaces, this way we don't need to change the IP in this line every time we run the server on a different computer
+    radio_server = nrf24.nrf24() # if you want to run locally (comment out the previous line)
 
     if args.command == "attack":
         # We need to enter sniffer mode because this is the only way to tell the attacking dongle which address to use
