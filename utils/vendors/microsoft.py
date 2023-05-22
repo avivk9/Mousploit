@@ -48,17 +48,13 @@ from ..general_utils import *
 DELAY_BETWEEN_TRANSMISSIONS = 5 / 1000 # 5ms
 current_seq_id = 0 # the sequence ID should be incremented with each generated packet
 
-# mapping from addresses to headers and packet lengths (currently hardcoded, will later be replaced by a database for storing in the long term)
-mapping = {
-    "AA:11:5F:6E:6D": ["08:90:02:F0", 19], # Microsoft Wireless Mouse 1000
-    "AA:11:5F:6E:CD": ["08:98:06:F0", 20]  # Microsoft Wireless Keyboard 850
-}
-
-def init(address):
+def init(pkt_header, pkt_len):
     # define and initialize global variables
-    global device_address
+    global packet_header
+    global packet_len
     global KEEPALIVE_PAYLOAD
-    device_address = address
+    packet_header = pkt_header
+    packet_len = pkt_len
     KEEPALIVE_PAYLOAD = build_frame(KEY_RELEASE) # MS doesn't seem to have a keepalive format, but we have to define it for inject_keystrokes(). A key release can be used (simply sent after each keystroke)
 
 def with_checksum(payload):
@@ -82,10 +78,11 @@ def build_frame(scan_code, modifier=KEY_MOD_NONE):
     """
     This function receives the scan code and modifier of a keystroke, and returns the proper frame/payload (list of bytes).
     """
-    global current_seq_id # stating that this variable is the same one declared in the global scope, not local
-    packet_header = mapping[device_address][0]
-    packet_length = mapping[device_address][1]
+    # stating that these variables are the same ones declared in the global scope, not local
+    global current_seq_id
+    global packet_header
+    global packet_len
     payload = payload_str_to_bytes(packet_header) + list(current_seq_id.to_bytes(2, byteorder='little')) + [0x43, modifier, 0x00, scan_code]
-    payload += [0x00] * (packet_length - len(payload) - 1)
+    payload += [0x00] * (packet_len - len(payload) - 1)
     current_seq_id = (current_seq_id + 1) & 0xFFFF # incrementing the sequence ID, making sure it doesn't exceed 2 bytes
     return with_checksum(payload)

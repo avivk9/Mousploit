@@ -28,9 +28,10 @@ def parse_script(radio, script, vendor=logitech):
     ValueError: If the script contains an unknown command.
     """
     lines = script.split('\n')
-    loop_lines = lines
-    for index, line in enumerate(lines):
-        if not line.strip():  # ignore empty lines
+    index = 0
+    while index < len(lines):
+        line = lines[index].strip() # remove leading and trailing whitespaces (to support tabs for example)
+        if not line: # ignore empty lines
             continue
         parts = line.split()
         if len(parts) == 0:
@@ -52,20 +53,17 @@ def parse_script(radio, script, vendor=logitech):
             inject_keystrokes(radio, [[KEY_DELAY, int(args[0])]], vendor)
         elif command == 'CTRL-SHIFT':
             inject_keystrokes(radio, [[other_keys[args[0]][0], KEY_MOD_LCTRL | KEY_MOD_RSHIFT]], vendor)
-
-        elif command == 'WHILE' :
+        elif command == 'WHILE':
             if args[0] == 'TRUE':
-                loop_lines = lines[index + 1:]
+                loop_start = index + 1 # store the index of the first line in the infinite loop
             else:
                 raise ValueError('Invalid WHILE statement')
         elif command == 'END_WHILE':
-            loop_lines = loop_lines[:index + 1]
-            loop_script = '\n'.join(loop_lines)
-            parse_script(radio, loop_script)
-            print(loop_script)
-
+            index = loop_start # set the index to go to the first line of the infinite loop
+            continue # skip index += 1 at the end
         elif command in other_keys.keys():
             transmit_keys(radio, [command], vendor)
         else:
             raise ValueError(f'Unknown command: {command}')
-
+        
+        index += 1

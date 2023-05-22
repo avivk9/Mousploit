@@ -8,7 +8,11 @@ import sys
 import os
 from os.path import dirname
 
+sys.path.append(dirname(dirname(__file__)))
+from utils import db_utils
+
 SCRIPTS_DIR = dirname(dirname(__file__)) + "/scripts" # "scripts" folder is a subfolder of the project root
+MOUSPLOIT_DB = dirname(dirname(__file__)) + "/mousploit_database.db" # path to the SQLite database file
 
 # mapping menu options to values that can be passed as the vendor argument
 vendors = {
@@ -74,12 +78,12 @@ def main():
         # if the user chooses to sniff
         elif selection == "2":
             cmd += "sniff "
-
-            address = input("Enter address (leave blank to use default): ")
-            if address == "":
-                print("Using default address: E4:ED:AE:B8:B4")
+            device = db_utils.choose_row(MOUSPLOIT_DB, "DEVICES", [3, 4]) # suggest devices from DB and ask the user to choose (exclude packet header and length fields from display)
+            if not device:
+                address = input("Enter address: ") # manual input
             else:
-                cmd += f"--address {address} " # adding the proper argument to the command string
+                address = device[1] # address is second field in the row
+            cmd += f"--address {address} " # adding the proper argument to the command string
 
             duration = input("Enter sniffing duration in seconds (leave blank to use default): ")
             if duration == "":
@@ -90,30 +94,35 @@ def main():
         # if the user chooses to attack
         elif selection == "3":
             cmd += "attack "
-
-            address = input("Enter address (leave blank to use default): ")
-            if address == "":
-                print("Using default address: E4:ED:AE:B8:B4")
-            else:
+            device = db_utils.choose_row(MOUSPLOIT_DB, "DEVICES", [3, 4]) # suggest devices from DB and ask the user to choose
+            if not device:
+                # receive address and vendor manually
+                address = input("Enter address: ")
                 cmd += f"--address {address} "
-
-            # vendor selection
-            print("\nSupported vendors:\n1. Logitech\n2. Microsoft")
-            vendor = input("\nSelect device vendor: ")
-            if vendor in vendors:
-                cmd += f"--vendor {vendors[vendor]} "
+                print("\nSupported vendors:\n1. Logitech\n2. Microsoft")
+                vendor = input("\nSelect device vendor: ")
+                if vendor in vendors:
+                    cmd += f"--vendor {vendors[vendor]} "
+            else:
+                address = device[1]
+                vendor = device[2]
+                packet_header = device[3]
+                packet_len = device[4]
+                cmd += f"--address {address} --vendor {vendor} "
+                if packet_header and packet_len: # if these fields are not empty (in case of Microsoft devices)
+                    cmd += f"--packet-header {packet_header} --packet-len {packet_len} "
 
             option = input("Select injection type ('1' - string, '2' - DuckyScript, '3' - Live mode): ")
             if option == "1": # inject string
                 string = input("Enter string: ")
                 cmd += f"--string \"{string}\"" # if the string contains whitespaces, it must be surrounded with DOUBLE quotes
             elif option == "2": # inject DuckyScript
-                scripts = os.listdir(SCRIPTS_DIR) # get a list of all filenames from the scripts directory
-                print("\nAvailable scripts:")
-                for i in range(len(scripts)):
-                    print((f"{i + 1}. {scripts[i]}")) # print a numbered list of the script filenames
-                num = int(input("\nEnter selection: "))
-                cmd += f"--script-file \"{SCRIPTS_DIR}/{scripts[num - 1]}\""
+                script = db_utils.choose_row(MOUSPLOIT_DB, "SCRIPTS") # suggest scripts from DB and ask the user to choose
+                if not script:
+                    path = input("\nEnter DuckyScript path: ") # manual input
+                    cmd += f"--script-file \"{path}\""
+                else:
+                    cmd += f"--script-file \"{SCRIPTS_DIR}/{script[1]}\"" # script filename is the second field in the row
             elif option == '3': # live mode
                 cmd += "--live-mode"
 
