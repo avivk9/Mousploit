@@ -4,6 +4,7 @@ including payload formats, keepalive payloads and implementation of build_frame(
 """
 
 from ..hid_scan_codes import * # no problem doing a relative import since this file should not be executed
+from ..general_utils import *
 
 # constants
 KEEPALIVE_TIMEOUT = 0x4B0 # 1200ms
@@ -60,3 +61,18 @@ def build_frame(scan_code, modifier=KEY_MOD_NONE):
         return multimedia_key_payload(scan_code)
     is_last_key_multimedia = False # update the flag
     return unencrypted_keystroke_payload(scan_code, modifier)
+
+################################################## Copied from general utils ########################################################
+def format_bytes(data):
+    # e.g. the payload: [0x00, 0xC1, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3B] is formatted as: 00:C1:00:04:00:00:00:00:00:3B
+    return ':'.join('{:02X}'.format(b) for b in data)
+
+def payload_str_to_bytes(payload):
+    # e.g. the payload string: 00:C1:00:04:00:00:00:00:00:3B is converted to: [0x00, 0xC1, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3B]
+    return list(bytes.fromhex(payload.replace(':', '')))
+#####################################################################################################################################
+
+def mouse_move(x, y):
+    combined_str = x + y
+    movement = int(combined_str, 16)
+    return with_checksum(payload_str_to_bytes("00:C2:00:00:" + format_bytes(movement.to_bytes(3, byteorder='little')) + ":00:00")) # must be little endian!

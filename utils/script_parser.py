@@ -53,6 +53,8 @@ def parse_script(radio, script, vendor=logitech):
             inject_keystrokes(radio, [[KEY_DELAY, int(args[0])]], vendor)
         elif command == 'CTRL-SHIFT':
             inject_keystrokes(radio, [[other_keys[args[0]][0], KEY_MOD_LCTRL | KEY_MOD_RSHIFT]], vendor)
+        elif command == "MOUSE_MOVE":
+            radio.transmit_payload(logitech.mouse_move(args[0][2:], args[1][2:]))
         elif command == 'WHILE':
             if args[0] == 'TRUE':
                 loop_start = index + 1 # store the index of the first line in the infinite loop
