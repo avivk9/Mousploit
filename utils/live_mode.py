@@ -3,6 +3,7 @@ from pynput import keyboard # library for controlling and monitoring input devic
 from .vendors import logitech
 from .hid_scan_codes import *
 from .general_utils import *
+from .injection_utils import *
 
 DELAY_BETWEEN_TRANSMISSIONS = 10 / 1000 # 10ms
 
@@ -26,16 +27,6 @@ def on_press(key):
 def on_release(key):
     global key_released # stating that this variable is the same one declared in the global scope, not local
     key_released = True # updating the flag
-    
-def try_transmit(radio, frame):
-    """
-    This function receives a frame and tries to transmit it until success. Reliability is more important in live mode than in a regular attack.
-    """
-    if radio.transmit_payload(frame): # first try, if it doesn't work then try once again
-        return
-    while not radio.transmit_payload(frame): # continue as long as it still doesn't work
-        while not find_frequency_channel(radio): # starting from the second try, search for the frequency channel (which was most likely changed) every time a transmission fails
-            pass
 
 def live_mode(radio, vendor=logitech):
     """

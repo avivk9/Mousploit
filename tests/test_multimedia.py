@@ -7,7 +7,7 @@ from os.path import dirname
 
 sys.path.append(dirname(dirname(__file__)))
 from radio_agent import nrf24
-from utils.general_utils import *
+from utils.injection_utils import *
 
 def main():
     address = [0xB4, 0xB8, 0xAE, 0xED, 0xE4] # RF address of a Logitech MK345 keyboard that I (Ron) own

@@ -1,5 +1,6 @@
 import time
 from pynput.keyboard import Controller, Listener, Key, KeyCode
+from ..hid_scan_codes import *
 from ..general_utils import *
 
 CHANNEL = 26

@@ -1,4 +1,4 @@
-from .general_utils import *
+from .injection_utils import *
 from .hid_scan_codes import *
 from .vendors import logitech
 
@@ -32,13 +32,17 @@ def parse_script(radio, script, vendor=logitech):
     while index < len(lines):
         line = lines[index].strip() # remove leading and trailing whitespaces (to support tabs for example)
         if not line: # ignore empty lines
+            index += 1
             continue
         parts = line.split()
         if len(parts) == 0:
+            index += 1
             continue
         command = parts[0]
         args = parts[1:]
+
         if command == 'REM':
+            index += 1
             continue
         elif command == 'WINDOWS':
             if args:
@@ -53,8 +57,9 @@ def parse_script(radio, script, vendor=logitech):
             inject_keystrokes(radio, [[KEY_DELAY, int(args[0])]], vendor)
         elif command == 'CTRL-SHIFT':
             inject_keystrokes(radio, [[other_keys[args[0]][0], KEY_MOD_LCTRL | KEY_MOD_RSHIFT]], vendor)
-        elif command == "MOUSE_MOVE":
-            radio.transmit_payload(logitech.mouse_move(args[0][2:], args[1][2:]))
+        elif command == "MOUSE_MOVE": # has arguments for X and Y velocities, given as hex values with 0x prefix
+            # patch: using try_transmit only in the case of mouse movement so that we search for the channel again if it gets lost while running the DoS DuckyScript
+            try_transmit(radio, logitech.mouse_move_payload(args[0].replace("0x", ""), args[1].replace("0x", ""))) # trimming 0x before passing the values to the function
         elif command == 'WHILE':
             if args[0] == 'TRUE':
                 loop_start = index + 1 # store the index of the first line in the infinite loop

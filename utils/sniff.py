@@ -1,5 +1,6 @@
 import time
 from .general_utils import *
+from .injection_utils import find_frequency_channel # sniffing is the only case where find_frequency_channel is used not in the context of injection attacks
 from .packet_identifier import *
 from .vendors import eagletec
 

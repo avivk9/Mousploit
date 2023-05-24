@@ -13,7 +13,7 @@ making sure everything can run smoothly within VS Code as well.
 '''
 sys.path.append(dirname(dirname(__file__)))
 from radio_agent import nrf24
-from utils.general_utils import *
+from utils.injection_utils import *
 
 def main():
     # E4:ED:AE:B8:B4 is an RF address of a Logitech MK345 keyboard that I (Ron) own.

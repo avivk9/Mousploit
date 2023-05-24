@@ -41,6 +41,15 @@ def multimedia_key_payload(scan_code):
     """
     return with_checksum([0x00, 0xC3] + list(scan_code.to_bytes(2, byteorder='little')) + [0x00, 0x00, 0x00, 0x00, 0x00]) # for codes more than one byte long, turns out it needs to be little endian
 
+def mouse_move_payload(x, y):
+    """
+    This function returns a mouse movement payload based on the given X and Y velocities (hex values given as strings without 0x prefix).
+    Refer to Table 6 in the MouseJack whitepaper: Logitech Mouse Payload.
+    """
+    combined_str = y + x # the Y velocity is followed by the X velocity
+    movement = int(combined_str, 16) # convert hex string to integer
+    return with_checksum(payload_str_to_bytes("00:C2:00:00:" + format_bytes(movement.to_bytes(3, byteorder='little')) + ":00:00")) # movement bytes must be in little endian
+
 # Keepalive-related payload formats
 SET_KEEPALIVE_TIMEOUT_PAYLOAD = with_checksum([0x00, 0x4F, 0x00] + list(TIMEOUT_BYTES) + [0x00, 0x00, 0x00, 0x00]) # refer to Figure 5 in the MouseJack whitepaper: Logitech Unifying Set Keepalive Timeout Payload
 KEEPALIVE_PAYLOAD = with_checksum([0x00, 0x40] + list(TIMEOUT_BYTES)) # refer to Figure 6 in the MouseJack whitepaper: Logitech Unifying Keepalive Payload
@@ -61,18 +70,3 @@ def build_frame(scan_code, modifier=KEY_MOD_NONE):
         return multimedia_key_payload(scan_code)
     is_last_key_multimedia = False # update the flag
     return unencrypted_keystroke_payload(scan_code, modifier)
-
-################################################## Copied from general utils ########################################################
-def format_bytes(data):
-    # e.g. the payload: [0x00, 0xC1, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3B] is formatted as: 00:C1:00:04:00:00:00:00:00:3B
-    return ':'.join('{:02X}'.format(b) for b in data)
-
-def payload_str_to_bytes(payload):
-    # e.g. the payload string: 00:C1:00:04:00:00:00:00:00:3B is converted to: [0x00, 0xC1, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3B]
-    return list(bytes.fromhex(payload.replace(':', '')))
-#####################################################################################################################################
-
-def mouse_move(x, y):
-    combined_str = x + y
-    movement = int(combined_str, 16)
-    return with_checksum(payload_str_to_bytes("00:C2:00:00:" + format_bytes(movement.to_bytes(3, byteorder='little')) + ":00:00")) # must be little endian!

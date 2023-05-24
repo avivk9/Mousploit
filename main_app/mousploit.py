@@ -6,6 +6,7 @@ sys.path.append(dirname(dirname(__file__)))
 from main_app.radio_server import *
 from radio_agent import nrf24
 from utils.general_utils import *
+from utils.injection_utils import *
 from utils.script_parser import *
 from utils.scan import *
 from utils.sniff import *

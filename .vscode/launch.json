@@ -9,6 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
+            //"args": ["attack", "--address=FA:AB:A8:0C:A4", "--vendor=logitech", "--script-file=D:\\Mousploit\\scripts\\denial_of_service.txt"], // to set command line arguments for debug
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
