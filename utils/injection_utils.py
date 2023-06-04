@@ -93,7 +93,7 @@ def inject_keystrokes(radio, keystrokes, vendor=logitech):
             return
 
         radio.transmit_payload(vendor.build_frame(scan_code, modifier)) # transmit the proper frame
-        time.sleep(vendor.DELAY_BETWEEN_TRANSMISSIONS / 2) # waiting before the next transmission
+        time.sleep(vendor.DELAY_BETWEEN_TRANSMISSIONS) # waiting before the next transmission
         radio.transmit_payload(vendor.KEEPALIVE_PAYLOAD) # transmit keepalive
 
     # we have to transmit a key release at the end, otherwise it would keep typing the last key forever

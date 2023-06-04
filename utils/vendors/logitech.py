@@ -9,7 +9,7 @@ from ..general_utils import *
 # constants
 KEEPALIVE_TIMEOUT = 0x4B0 # 1200ms
 TIMEOUT_BYTES = KEEPALIVE_TIMEOUT.to_bytes(2, byteorder='big') # splitting the timeout into two bytes in big endian (b'\x04\0xB0')
-DELAY_BETWEEN_TRANSMISSIONS = 12 / 1000 # 12ms
+DELAY_BETWEEN_TRANSMISSIONS = 1.5 / 1000 # 1.5ms
 
 # We need to remember whether the last injected key was a multimedia key or a standard one,
 # because we could have a key release packet in the middle, and in order to have an effect it should match the type of the key typed just before it.
