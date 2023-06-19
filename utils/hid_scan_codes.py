@@ -220,6 +220,9 @@ printable_characters = {
     '~':  [KEY_GRAVE, KEY_MOD_LSHIFT]
 }
 
+# inverted printable_characters dictionary (since lists cannot be used as keys, we concatenate the scan code and modifier into a single string)
+keystroke_to_char = {f"{v[0]}-{v[1]}": k for k, v in printable_characters.items()}
+
 other_keys = {
     # keys that don't produce a character (their names are also DuckyScript keywords)
     '':            [KEY_RELEASE, KEY_MOD_NONE], # so that one can manually transmit a key release packet

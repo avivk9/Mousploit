@@ -1,5 +1,5 @@
 import socket
-import time
+import platform # module for retrieving data about the current platform
 import nrf24
 
 # custom codes for possible commands that the server can send to the agent
@@ -12,7 +12,7 @@ SET_CHANNEL                    = 6
 GET_CHANNEL                    = 7
 
 # constants
-IP = "127.0.0.1"
+IP = "127.0.0.1" # change to PC address (in the LAN created by the hotspot) when using Pi Zero W as agent
 PORT = 5000
 BUF_SIZE = 1024 # for recv parameter
 ACK = 1 # for informing the server that the command was carried out successfully, in case there's no specific data it needs to return
@@ -22,36 +22,42 @@ def debug_print(msg):
     if DEBUG:
         print(msg)
 
-# this function receives a defunct socket, closes it and repeatedly tries to reconnect to the server
+# this function receives a disconnected socket, closes it and repeatedly tries to reconnect to the server
 def reconnect(sock):
-    sock.close()
-    print("Connecting... (Press Ctrl+Break to exit)")
     while True:
+        sock.close()
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # cannot reuse a closed socket, so initialize a new one
+        sock.settimeout(0.5) # setting a timeout of 0.5sec before the socket gives up the current connection attempt
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # cannot reuse a closed socket, so initialize a new one
-            sock.connect((IP, PORT)) # blocks until some timeout expires and an exception is raised
-            return sock # if we reached here, connection was successful
-        except:
-            time.sleep(1) # sleeping for 1sec before next try
+            sock.connect((IP, PORT)) # blocks until either the timeout expires (and a timeout exception is raised) or the connection is successful
+            print("\nConnected!")
+            return sock
+        except socket.timeout:
+            print(".", end="", flush=True) # print dots as long as the client is trying to connect
 
 def main():
+    # in case the client runs in the Pi Zero W, we need to reset the radio
+    if platform.system() == "Linux":
+        import usb_reset
+        usb_reset.reset_nrf24()
+
     # initialize the radio
     radio = nrf24.nrf24()
 
-    # initialize TCP socket (not connecting it already, in order to take advantage of the infinite loop in reconnect())
+    # initialize TCP socket (not connecting it already, which allows us to run the client before the server and wait until connection as part of reconnect())
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     while True:
         # listening to commands from the server
         try:
             data = sock.recv(BUF_SIZE) # blocking call, as sockets are blocking by default (could be changed)
-        except:
+        except socket.error:
             sock = reconnect(sock) # try to reconnect
             continue # after reconnection is successful, start waiting for messages again
 
         if len(data) == 0: # means the server has closed (or is in the process of closing) the connection
             print("Connection closed by the server.")
-            sock = reconnect(sock)
+            sock.close() # closing socket so that in the next iteration there will be an exception, causing reconnection
             continue
         
         if data[0] == ENTER_PROMISCUOUS_MODE:

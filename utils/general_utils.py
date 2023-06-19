@@ -5,6 +5,7 @@ This file contains miscellaneous utility functions and definitions.
 # constants
 PING_PAYLOAD = [0x0F, 0x0F, 0x0F, 0x0F] # the arbitrary ping payload used in find_frequency_channel() and sniff()
 CHANNELS = range(2, 84) # the range of channels used in channel sweeping, scanning and sniffing (why this range was chosen is explained in find_frequency_channel())
+VERBOSE_ATTACK = False # flag deciding whether or not strings injected during an attack will be printed character by character as they are being transmitted
 
 def format_bytes(data):
     # e.g. the payload: [0x00, 0xC1, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3B] is formatted as: 00:C1:00:04:00:00:00:00:00:3B

