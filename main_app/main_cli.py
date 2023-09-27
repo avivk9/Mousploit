@@ -1,5 +1,6 @@
 """
 The Mousploit CLI works by executing mousploit.py with command line arguments corresponding to the selections made by the user.
+Separating the user interface from its functionality could allow for easy integration of other interface types, such as a GUI.
 """
 
 import colorama

